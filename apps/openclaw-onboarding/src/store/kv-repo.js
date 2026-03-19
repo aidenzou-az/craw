@@ -228,34 +228,18 @@ export class KvRepository {
         heartbeat_ttl_seconds: 0,
       };
     }
-    const logs = (await this.getLogs(userId, now)).filter(
-      (entry) => entry.openClawId === openClawId && entry.type === "success",
-    );
-    const sceneCounts = new Map();
-    for (const entry of logs) {
-      sceneCounts.set(entry.scene, (sceneCounts.get(entry.scene) ?? 0) + 1);
-    }
-    let dominantScene = null;
-    let maxCount = 0;
-    for (const [scene, count] of sceneCounts.entries()) {
-      if (count > maxCount) {
-        dominantScene = scene;
-        maxCount = count;
-      }
-    }
+    const onboardingDay = dayNumber(redeem.activatedAt, now);
     let adoptionState = "not_started";
-    if (logs.length === 1) {
+    if (onboardingDay >= 3 && onboardingDay <= 4) {
       adoptionState = "first_success";
-    } else if (logs.length >= 2 && logs.length <= 3) {
-      adoptionState = "repeated";
-    } else if (logs.length >= 4 || maxCount >= 3) {
+    } else if (onboardingDay >= 5) {
       adoptionState = "habitual";
     }
     return {
       service_active: true,
-      onboarding_day: dayNumber(redeem.activatedAt, now),
+      onboarding_day: onboardingDay,
       adoption_state: adoptionState,
-      dominant_scene: dominantScene,
+      dominant_scene: "summarize",
       expires_at: redeem.expiresAt,
       heartbeat_ttl_seconds: HEARTBEAT_TTL_SECONDS,
     };

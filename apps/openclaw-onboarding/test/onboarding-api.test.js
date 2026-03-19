@@ -76,7 +76,7 @@ test("token requires valid benefit but does not require prior redeem", async () 
   assert.ok(JSON.parse(response.body).data.onboarding_token);
 });
 
-test("status returns repeated when logs indicate reuse", async () => {
+test("status uses time-driven default state in test mode", async () => {
   const { hostId, hostAccessToken } = await registerHost();
   await dispatch(
     hostReq(
@@ -102,8 +102,6 @@ test("status returns repeated when logs indicate reuse", async () => {
     ),
   );
   const token = JSON.parse(tokenResp.body).data.onboarding_token;
-  await db.addLog({ type: "success", userId: "u_123", openClawId: "oc_123", scene: "summarize" });
-  await db.addLog({ type: "success", userId: "u_123", openClawId: "oc_123", scene: "summarize" });
   const statusResp = await dispatch({
     method: "GET",
     path: "/api/open-claw/onboarding-status",
@@ -112,7 +110,7 @@ test("status returns repeated when logs indicate reuse", async () => {
   });
   const payload = JSON.parse(statusResp.body);
   assert.equal(statusResp.status, 200);
-  assert.equal(payload.data.adoption_state, "repeated");
+  assert.equal(payload.data.adoption_state, "not_started");
   assert.equal(payload.data.dominant_scene, "summarize");
 });
 

@@ -226,6 +226,17 @@ Authorization: Bearer <onboarding_token>
 }
 ```
 
+### 测试阶段约定
+
+测试阶段不接入平台日志。
+
+返回规则固定为：
+
+- 第 1-2 天：`adoption_state = not_started`
+- 第 3-4 天：`adoption_state = first_success`
+- 第 5-7 天：`adoption_state = habitual`
+- `dominant_scene = summarize`
+
 ### 字段定义
 
 - `service_active`
