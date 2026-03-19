@@ -10,6 +10,15 @@ function headersToObject(headers) {
   return output;
 }
 
+function resolveKvBinding(context) {
+  return (
+    context.env?.ONBOARDING_KV ??
+    context.ONBOARDING_KV ??
+    globalThis.ONBOARDING_KV ??
+    null
+  );
+}
+
 export async function dispatchEdgeOne(context, forcedPath = null) {
   try {
     const request = context.request;
@@ -18,7 +27,7 @@ export async function dispatchEdgeOne(context, forcedPath = null) {
     const headers = headersToObject(request.headers);
     const body =
       method === "GET" || method === "HEAD" ? null : await request.text();
-    const kvBinding = context.env?.ONBOARDING_KV ?? context.ONBOARDING_KV;
+    const kvBinding = resolveKvBinding(context);
 
     if (!kvBinding) {
       const response = fail(

@@ -61,3 +61,48 @@ test("edgeone adapter returns structured 503 when KV binding is missing", async 
   assert.equal(payload.success, false);
   assert.equal(payload.error.code, "SERVICE_MISCONFIGURED");
 });
+
+test("edgeone adapter can read KV binding from global scope fallback", async () => {
+  const kv = new MemoryKvBinding();
+  globalThis.ONBOARDING_KV = kv;
+
+  const body = JSON.stringify({
+    user_id: "u_123",
+    open_claw_id: "oc_123",
+    benefit_code: "feishu_lazy_pack_onboarding",
+  });
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const nonce = `nonce_${Math.random().toString(16).slice(2)}`;
+  const signature = await signHostRequest({
+    method: "POST",
+    path: "/api/open-claw/onboarding-redeem",
+    timestamp,
+    nonce,
+    body,
+  });
+
+  try {
+    const response = await dispatchEdgeOne(
+      {
+        request: new Request("https://example.com/api/open-claw/onboarding-redeem", {
+          method: "POST",
+          headers: {
+            authorization: "Bearer feishu-user:u_123",
+            "x-host-timestamp": timestamp,
+            "x-host-nonce": nonce,
+            "x-host-signature": signature,
+            "content-type": "application/json",
+          },
+          body,
+        }),
+      },
+      "/api/open-claw/onboarding-redeem",
+    );
+
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    assert.equal(payload.success, true);
+  } finally {
+    delete globalThis.ONBOARDING_KV;
+  }
+});
