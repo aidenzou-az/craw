@@ -34,6 +34,9 @@ export class OpenClawRuntime {
   async initialize() {
     let state = await this.loadState();
     state = await this.skillLoader.refresh(state, { force: !state.skill_last_fetched_at });
+    if (!state.host_registered) {
+      state = await this.#registerHost(state);
+    }
     if (!state.onboarding_token || this.#tokenExpired(state)) {
       state = await this.#refreshToken(state);
     }
@@ -125,6 +128,24 @@ export class OpenClawRuntime {
       onboarding_token: response.data.onboarding_token,
       token_expires_at: response.data.expires_at,
       last_token_refresh_at: new Date().toISOString(),
+    };
+  }
+
+  async #registerHost(state) {
+    const response = await this.apiClient.registerHost({
+      userId: this.userId,
+      openClawId: this.openClawId,
+    });
+    if (!response.success) {
+      throw new Error(`Host register failed: ${response.error.code}`);
+    }
+    return {
+      ...state,
+      host_registered: true,
+      host_id: response.data.host_id,
+      owner_open_id: response.data.owner_open_id,
+      owner_union_id: response.data.owner_union_id,
+      host_registered_at: new Date().toISOString(),
     };
   }
 

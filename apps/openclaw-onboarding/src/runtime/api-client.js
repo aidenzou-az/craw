@@ -5,10 +5,47 @@ function authHeaders(token) {
 }
 
 export class LocalApiClient {
-  constructor({ dispatch, hostToken, baseUrl }) {
+  constructor({
+    dispatch,
+    hostId = null,
+    ownerOpenId = null,
+    ownerUnionId = null,
+    feishuAppId = null,
+    feishuAppSecret = null,
+    baseUrl,
+  }) {
     this.dispatch = dispatch;
-    this.hostToken = hostToken;
+    this.hostId = hostId;
+    this.ownerOpenId = ownerOpenId;
+    this.ownerUnionId = ownerUnionId;
+    this.feishuAppId = feishuAppId;
+    this.feishuAppSecret = feishuAppSecret;
     this.baseUrl = baseUrl;
+  }
+
+  async registerHost({ userId, openClawId }) {
+    const body = {
+      user_id: userId,
+      open_claw_id: openClawId,
+      owner_open_id: this.ownerOpenId,
+      owner_union_id: this.ownerUnionId,
+      feishu_app_id: this.feishuAppId,
+      feishu_app_secret: this.feishuAppSecret,
+    };
+    const response = await this.dispatch({
+      method: "POST",
+      path: "/api/open-claw/host-register",
+      headers: {
+        "content-type": "application/json",
+      },
+      body,
+      baseUrl: this.baseUrl,
+    });
+    const decoded = this.#decode(response);
+    if (decoded.success) {
+      this.hostId = decoded.data.host_id;
+    }
+    return decoded;
   }
 
   async redeem({ userId, openClawId }) {
@@ -40,14 +77,24 @@ export class LocalApiClient {
   }
 
   async #callHostSigned(method, path, body) {
+    if (!this.hostId || !this.feishuAppSecret) {
+      throw new Error("Missing host registration or Feishu app secret");
+    }
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const nonce = `nonce_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
-    const signature = await signHostRequest({ method, path, timestamp, nonce, body });
+    const signature = await signHostRequest({
+      method,
+      path,
+      timestamp,
+      nonce,
+      body,
+      secret: this.feishuAppSecret,
+    });
     const response = await this.dispatch({
       method,
       path,
       headers: {
-        authorization: `Bearer ${this.hostToken}`,
+        "x-host-id": this.hostId,
         "x-host-timestamp": timestamp,
         "x-host-nonce": nonce,
         "x-host-signature": signature,

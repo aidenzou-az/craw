@@ -34,6 +34,14 @@ export class KvRepository {
     return `openclaw:${openClawId}`;
   }
 
+  keyHost(hostId) {
+    return `host:${hostId}`;
+  }
+
+  keyHostByOpenClaw(openClawId) {
+    return `openclaw-host:${openClawId}`;
+  }
+
   keyRedeem(userId, openClawId) {
     return `redeem:${userId}:${openClawId}`;
   }
@@ -63,6 +71,8 @@ export class KvRepository {
       userId,
       benefitCode: "feishu_lazy_pack_onboarding",
       enabled: true,
+      ownerOpenId: "ou_123",
+      ownerUnionId: "un_123",
     };
   }
 
@@ -72,6 +82,35 @@ export class KvRepository {
       return claw;
     }
     return null;
+  }
+
+  async registerHost(host) {
+    const record = {
+      ...host,
+      status: "active",
+      registeredAt: nowIso(),
+    };
+    await writeJson(this.kv, this.keyHost(host.hostId), record);
+    await this.kv.put(this.keyHostByOpenClaw(host.openClawId), host.hostId);
+    const claw = (await this.getOpenClaw(host.openClawId)) ?? { openClawId: host.openClawId };
+    await writeJson(this.kv, this.keyOpenClaw(host.openClawId), {
+      ...claw,
+      userId: host.userId,
+      hostId: host.hostId,
+    });
+    return record;
+  }
+
+  async getHostById(hostId) {
+    return readJson(this.kv, this.keyHost(hostId));
+  }
+
+  async getHostByOpenClawId(openClawId) {
+    const hostId = await this.kv.get(this.keyHostByOpenClaw(openClawId));
+    if (!hostId) {
+      return null;
+    }
+    return this.getHostById(hostId);
   }
 
   async redeem({ userId, openClawId, benefitCode }, now = Date.now()) {

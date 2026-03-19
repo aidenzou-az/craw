@@ -29,7 +29,66 @@
 
 ### 认证
 
-该接口应使用宿主平台身份校验，与 token 获取接口保持一致。
+该接口应使用宿主注册后得到的宿主身份校验，与 token 获取接口保持一致。
+
+请求头示例：
+
+```http
+X-Host-Id: host_xxx
+X-Host-Timestamp: 1742366400
+X-Host-Nonce: 7b3de9b2-4b9a-4a8d-bbf8-7c3b7a6d1d9f
+X-Host-Signature: <signature>
+Content-Type: application/json
+```
+
+## 2. 宿主注册
+
+### 接口
+
+`POST {OPEN_CLAW_ONBOARDING_API_BASE_URL}/api/open-claw/host-register`
+
+### 用途
+
+供 Open Claw 在首次启用 onboarding 服务前完成宿主绑定，确认：
+
+- 当前 Open Claw 属于当前用户
+- 当前飞书宿主应用凭证可用
+- 当前用户与懒人包权益绑定关系正确
+
+### 请求体示例
+
+```json
+{
+  "user_id": "u_123",
+  "open_claw_id": "oc_123",
+  "owner_open_id": "ou_123",
+  "owner_union_id": "un_123",
+  "feishu_app_id": "cli_xxx",
+  "feishu_app_secret": "app_secret_xxx"
+}
+```
+
+### 成功响应
+
+```json
+{
+  "success": true,
+  "data": {
+    "host_id": "host_xxx",
+    "host_registered": true,
+    "owner_open_id": "ou_123",
+    "owner_union_id": "un_123"
+  }
+}
+```
+
+### 约束
+
+- 必须幂等
+- 同一 `open_claw_id` 不允许绑定到不同宿主
+- 平台需加密存储 `feishu_app_secret`
+
+## 3. 获取 onboarding token
 
 ### 请求体示例
 
@@ -67,8 +126,6 @@
 - `BENEFIT_ALREADY_REDEEMED`
 - `BENEFIT_EXPIRED`
 
-## 2. 获取 onboarding token
-
 ### 接口
 
 `POST {OPEN_CLAW_ONBOARDING_API_BASE_URL}/api/open-claw/onboarding-token`
@@ -79,15 +136,17 @@
 
 ### 认证
 
-这个接口不能裸开放，必须依赖更上层的宿主身份校验。
+这个接口不能裸开放，必须依赖已注册宿主的签名认证。
 
-推荐使用飞书宿主身份作为一级认证来源。
+请求头示例：
 
-可选方式包括：
-
-- 飞书宿主 access token 或 session token
-- 安装实例签名
-- 飞书侧可验证的用户身份凭证
+```http
+X-Host-Id: host_xxx
+X-Host-Timestamp: 1742366400
+X-Host-Nonce: 7b3de9b2-4b9a-4a8d-bbf8-7c3b7a6d1d9f
+X-Host-Signature: <signature>
+Content-Type: application/json
+```
 
 该接口的核心目标是：只为当前真实用户和当前 Open Claw 实例签发用户专属 token，并确认其具备启动 onboarding 服务的资格，但不在此接口消耗权益。
 
@@ -121,7 +180,7 @@
 - token 必须支持失效和轮换
 - Open Claw 获取到 token 后应保存在本地私有状态中，后续复用，不要每轮重复换取
 
-## 3. 获取上手服务状态
+## 4. 获取上手服务状态
 
 ### 接口
 

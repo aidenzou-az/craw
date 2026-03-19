@@ -1,5 +1,3 @@
-import { HOST_SIGNATURE_SECRET } from "../constants.js";
-
 const encoder = new TextEncoder();
 
 async function sha256Hex(input) {
@@ -16,6 +14,7 @@ export async function signHostPayload({
   timestamp,
   nonce,
   body,
+  secret,
 }) {
   const normalizedBody =
     typeof body === "string" ? body : JSON.stringify(body ?? {});
@@ -27,7 +26,7 @@ export async function signHostPayload({
       String(timestamp),
       nonce,
       bodyHash,
-      HOST_SIGNATURE_SECRET,
+      secret,
     ].join(":"),
   );
 }
@@ -36,4 +35,13 @@ export async function randomToken(prefix = "otk") {
   const seed = `${prefix}:${Date.now()}:${crypto.randomUUID()}`;
   const hash = await sha256Hex(seed);
   return `${prefix}_${hash.slice(0, 24)}`;
+}
+
+export function verifyFeishuAppSecretShape({ feishuAppId, feishuAppSecret }) {
+  return Boolean(
+    feishuAppId &&
+      feishuAppSecret &&
+      feishuAppSecret.length >= 8 &&
+      /^[a-zA-Z0-9_-]+$/.test(feishuAppId),
+  );
 }

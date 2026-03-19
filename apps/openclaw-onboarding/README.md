@@ -9,6 +9,7 @@ This app contains:
 - Open Claw runtime mock
 - tests for the main onboarding flow
 - EdgeOne Pages adapter used by `/edge-functions/*`
+- host registration flow for replacing mock Feishu host auth
 
 ## Structure
 

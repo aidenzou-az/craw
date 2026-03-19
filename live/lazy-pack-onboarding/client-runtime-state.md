@@ -18,6 +18,10 @@
 ```json
 {
   "base_url": "https://your-onboarding-api.example.com",
+  "host_registered": true,
+  "host_id": "host_xxx",
+  "owner_open_id": "ou_123",
+  "owner_union_id": "un_123",
   "redeemed": true,
   "onboarding_token": "otk_xxx",
   "token_expires_at": "2026-03-26T10:00:00Z",
@@ -42,6 +46,18 @@
 
 - `redeemed`
   当前 Open Claw 是否已完成懒人包权益核销
+
+- `host_registered`
+  当前 Open Claw 是否已完成宿主注册
+
+- `host_id`
+  当前宿主注册成功后返回的唯一宿主标识
+
+- `owner_open_id`
+  当前宿主绑定的飞书用户 open_id
+
+- `owner_union_id`
+  当前宿主绑定的飞书用户 union_id
 
 - `onboarding_token`
   当前有效的用户专属 token
@@ -76,8 +92,9 @@
 
 更合理的顺序是：
 
-1. 先换取 onboarding token，确认当前用户和当前 Open Claw 具备启动资格
-2. 再调用权益核销接口，正式启动 7 天服务
+1. 先完成宿主注册，确认当前 Open Claw 与飞书宿主实例绑定正确
+2. 再换取 onboarding token，确认当前用户和当前 Open Claw 具备启动资格
+3. 再调用权益核销接口，正式启动 7 天服务
 
 ### 需要获取 token 的情况
 
@@ -128,6 +145,8 @@ Open Claw 不应长期只依赖本地缓存中的 `skill.md`。
 收到用户消息
   ->
 检查本地是否已有 onboarding_token
+  ->
+如果当前 Open Claw 尚未完成宿主注册，则先调用宿主注册接口
   ->
 如果没有或已过期，先换 token
   ->

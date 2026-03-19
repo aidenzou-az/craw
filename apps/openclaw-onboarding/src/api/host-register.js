@@ -1,0 +1,22 @@
+import { fail, ok, parseJsonBody } from "../utils/http.js";
+import { registerHost } from "../services/host-service.js";
+
+export async function handleHostRegister(req, repo) {
+  if (req.method !== "POST") {
+    return fail(405, "METHOD_NOT_ALLOWED", "Expected POST");
+  }
+  const body = parseJsonBody(req);
+  const result = await registerHost({
+    repo,
+    userId: body.user_id,
+    openClawId: body.open_claw_id,
+    ownerOpenId: body.owner_open_id,
+    ownerUnionId: body.owner_union_id ?? null,
+    feishuAppId: body.feishu_app_id,
+    feishuAppSecret: body.feishu_app_secret,
+  });
+  if (result.error) {
+    return fail(403, result.error.code, result.error.message);
+  }
+  return ok(result.data);
+}

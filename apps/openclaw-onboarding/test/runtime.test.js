@@ -17,7 +17,10 @@ async function makeRuntime() {
   const stateStore = new FileStateStore(path.join(dir, "state.json"));
   const apiClient = new LocalApiClient({
     dispatch,
-    hostToken: "feishu-user:u_123",
+    ownerOpenId: "ou_123",
+    ownerUnionId: "un_123",
+    feishuAppId: "cli_test_app",
+    feishuAppSecret: "secret_test_123",
     baseUrl: "http://local.test",
   });
   const sender = new MockFeishuSender();
@@ -40,6 +43,8 @@ test.beforeEach(() => {
 test("runtime initializes token -> redeem -> status", async () => {
   const { runtime, dir } = await makeRuntime();
   const state = await runtime.initialize();
+  assert.equal(state.host_registered, true);
+  assert.ok(state.host_id);
   assert.equal(state.redeemed, true);
   assert.ok(state.onboarding_token);
   assert.equal(state.status_cache.service_active, true);

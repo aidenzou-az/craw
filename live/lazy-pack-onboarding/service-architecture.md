@@ -9,6 +9,8 @@
   ->
 Open Claw 带着 7 天上手服务 skill 运行
   ->
+Open Claw 首次调用宿主注册 API，完成飞书宿主绑定
+  ->
 Open Claw 首次通过 onboarding token API 换取用户专属 token
   ->
 Open Claw 首次启动时核销懒人包权益
@@ -34,6 +36,7 @@ Open Claw 完全停止这套机制
 
 - 维护上手服务生命周期
 - 提供权益核销 API
+- 提供宿主注册 API
 - 对外暴露 token 获取 API
 - 对外暴露状态 API
 - 运行后台低频心跳任务
@@ -44,6 +47,7 @@ Open Claw 完全停止这套机制
 
 ### Open Claw 负责
 
+- 首次启动时先完成宿主注册
 - 按 skill 中定义的规则先获取用户专属 onboarding token
 - 首次正式启动 7 天上手服务时核销懒人包权益
 - 将 onboarding token 保存在本地私有状态中
@@ -70,6 +74,7 @@ Open Claw 不应在每次对话都调用状态 API。
 推荐规则：
 
 - 首次需要使用上手服务时，如果本地没有 onboarding token，先调用 token 获取接口
+- 首次需要使用上手服务时，如果当前 Open Claw 尚未完成宿主注册，先调用宿主注册接口
 - 获取到 token 后，保存在本地私有状态中，后续复用
 - 正式启动 7 天服务前，再调用权益核销接口
 - 如果本地没有缓存状态，先拉一次状态
@@ -100,6 +105,8 @@ Open Claw 不应在每次对话都调用状态 API。
 用户发来消息
   ->
 检查本地是否已有 onboarding token
+  ->
+如果当前 Open Claw 尚未完成宿主注册，则先调用宿主注册 API
   ->
 如果没有，则先调用 onboarding token API
   ->

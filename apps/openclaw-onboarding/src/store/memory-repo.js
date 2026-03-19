@@ -15,6 +15,7 @@ export class MemoryRepository {
   }
 
   reset() {
+    this.hosts = new Map();
     this.redeems = new Map();
     this.tokens = new Map();
     this.nonces = new Set();
@@ -26,6 +27,8 @@ export class MemoryRepository {
           userId: "u_123",
           benefitCode: "feishu_lazy_pack_onboarding",
           enabled: true,
+          ownerOpenId: "ou_123",
+          ownerUnionId: "un_123",
         },
       ],
     ]);
@@ -38,6 +41,31 @@ export class MemoryRepository {
 
   async getOpenClaw(openClawId) {
     return this.openClaws.get(openClawId) ?? null;
+  }
+
+  async registerHost(host) {
+    const record = {
+      ...host,
+      status: "active",
+      registeredAt: nowIso(),
+    };
+    this.hosts.set(host.hostId, record);
+    const claw = this.openClaws.get(host.openClawId) ?? { openClawId: host.openClawId };
+    this.openClaws.set(host.openClawId, { ...claw, userId: host.userId, hostId: host.hostId });
+    return record;
+  }
+
+  async getHostById(hostId) {
+    return this.hosts.get(hostId) ?? null;
+  }
+
+  async getHostByOpenClawId(openClawId) {
+    for (const host of this.hosts.values()) {
+      if (host.openClawId === openClawId) {
+        return host;
+      }
+    }
+    return null;
   }
 
   getRedeemKey(userId, openClawId) {

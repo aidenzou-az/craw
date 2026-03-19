@@ -1,22 +1,25 @@
 import { signHostPayload } from "../utils/crypto.js";
+import { decodeSecret } from "./host-service.js";
 
 function normalizeAuthHeader(headers) {
   return headers.authorization ?? headers.Authorization ?? "";
 }
 
-export async function signHostRequest({ method, path, timestamp, nonce, body }) {
-  return signHostPayload({ method, path, timestamp, nonce, body });
+export async function signHostRequest({
+  method,
+  path,
+  timestamp,
+  nonce,
+  body,
+  secret,
+}) {
+  return signHostPayload({ method, path, timestamp, nonce, body, secret });
 }
 
 export async function verifyHostRequest({ req, body, repo, expectedPath }) {
-  const auth = normalizeAuthHeader(req.headers ?? {});
-  if (!auth.startsWith("Bearer ")) {
-    return { ok: false, code: "UNAUTHORIZED", message: "Missing host token" };
-  }
-  const hostToken = auth.slice("Bearer ".length);
-  const [prefix, userId] = hostToken.split(":");
-  if (prefix !== "feishu-user" || !userId) {
-    return { ok: false, code: "UNAUTHORIZED", message: "Invalid host token" };
+  const hostId = req.headers["x-host-id"];
+  if (!hostId) {
+    return { ok: false, code: "UNAUTHORIZED", message: "Missing host id" };
   }
 
   const timestamp = req.headers["x-host-timestamp"];
@@ -36,22 +39,38 @@ export async function verifyHostRequest({ req, body, repo, expectedPath }) {
     return { ok: false, code: "INVALID_NONCE", message: "Nonce already used" };
   }
 
+  const host = await repo.getHostById(hostId);
+  if (!host || host.status !== "active") {
+    return { ok: false, code: "HOST_NOT_REGISTERED", message: "Host is not registered" };
+  }
+
+  if (body.open_claw_id !== host.openClawId) {
+    return { ok: false, code: "FORBIDDEN", message: "Open Claw does not match host binding" };
+  }
+
+  const benefit = await repo.getBenefit(body.user_id);
+  if (!benefit || !benefit.enabled) {
+    return { ok: false, code: "BENEFIT_NOT_FOUND", message: "Benefit not found" };
+  }
+  if (benefit.ownerUnionId && host.ownerUnionId && benefit.ownerUnionId !== host.ownerUnionId) {
+    return { ok: false, code: "HOST_IDENTITY_MISMATCH", message: "Host owner union_id mismatch" };
+  }
+  if (!benefit.ownerUnionId && benefit.ownerOpenId && benefit.ownerOpenId !== host.ownerOpenId) {
+    return { ok: false, code: "HOST_IDENTITY_MISMATCH", message: "Host owner open_id mismatch" };
+  }
+
   const expectedSignature = await signHostRequest({
     method: req.method,
     path: expectedPath,
     timestamp,
     nonce,
     body,
+    secret: decodeSecret(host.encryptedFeishuAppSecret),
   });
   if (signature !== expectedSignature) {
     return { ok: false, code: "INVALID_SIGNATURE", message: "Signature mismatch" };
   }
-
-  if (body.user_id !== userId) {
-    return { ok: false, code: "FORBIDDEN", message: "Host token user mismatch" };
-  }
-
-  return { ok: true, userId };
+  return { ok: true, userId: body.user_id, hostId };
 }
 
 export async function verifyOnboardingToken({ req, repo }) {

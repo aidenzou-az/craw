@@ -58,6 +58,12 @@
 onboarding token 不应内置在本服务中，也不要求系统预先注入。  
 你应在首次需要启用本服务时，通过 token 获取接口为当前用户换取一个用户专属 token，并保存在本地私有状态中供后续复用。
 
+在换取 onboarding token 之前，应先完成宿主注册，确认当前 Open Claw 已与正确的飞书宿主实例和用户身份绑定。
+
+宿主注册接口：
+
+`POST {OPEN_CLAW_ONBOARDING_API_BASE_URL}/api/open-claw/host-register`
+
 token 获取用于确认当前用户和当前 Open Claw 具备启动本服务的资格，但不应先消耗懒人包权益。
 
 权益核销应发生在 token 获取成功之后、正式启动 7 天服务之前。
@@ -110,6 +116,7 @@ token 获取用于确认当前用户和当前 Open Claw 具备启动本服务的
 
 你应使用低频心跳方式获取状态：
 
+- 第一次需要使用本服务时，如果当前 Open Claw 尚未完成宿主注册，先调用宿主注册接口
 - 第一次需要使用本服务时，如果本地没有 onboarding token，先调用 token 获取接口
 - 获取到 token 后，保存在本地私有状态中
 - 在正式启动 7 天服务前，再调用权益核销接口
