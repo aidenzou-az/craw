@@ -1,0 +1,190 @@
+import { HEARTBEAT_TTL_SECONDS } from "../config.js";
+
+function nowIso(now = Date.now()) {
+  return new Date(now).toISOString();
+}
+
+function dayNumber(activatedAt, now = Date.now()) {
+  const diff = now - new Date(activatedAt).getTime();
+  return Math.max(1, Math.min(7, Math.floor(diff / 86400000) + 1));
+}
+
+class MockDb {
+  reset() {
+    this.redeems = new Map();
+    this.tokens = new Map();
+    this.nonces = new Set();
+    this.logs = [];
+    this.userBenefits = new Map([
+      [
+        "u_123",
+        {
+          userId: "u_123",
+          benefitCode: "feishu_lazy_pack_onboarding",
+          enabled: true,
+        },
+      ],
+    ]);
+    this.openClaws = new Map([["oc_123", { openClawId: "oc_123", userId: "u_123" }]]);
+  }
+
+  getBenefit(userId) {
+    return this.userBenefits.get(userId) ?? null;
+  }
+
+  getOpenClaw(openClawId) {
+    return this.openClaws.get(openClawId) ?? null;
+  }
+
+  getRedeemKey(userId, openClawId) {
+    return `${userId}:${openClawId}`;
+  }
+
+  redeem({ userId, openClawId, benefitCode }, now = Date.now()) {
+    const key = this.getRedeemKey(userId, openClawId);
+    const existing = this.redeems.get(key);
+    if (existing) {
+      return existing;
+    }
+    const activatedAt = nowIso(now);
+    const expiresAt = nowIso(now + 7 * 86400000);
+    const record = {
+      redeemId: `redeem_${userId}_${openClawId}`,
+      userId,
+      openClawId,
+      benefitCode,
+      activatedAt,
+      expiresAt,
+      serviceActive: true,
+    };
+    this.redeems.set(key, record);
+    return record;
+  }
+
+  getRedeem(userId, openClawId) {
+    return this.redeems.get(this.getRedeemKey(userId, openClawId)) ?? null;
+  }
+
+  issueToken({ userId, openClawId }, token, expiresAt) {
+    const tokenRecord = {
+      token,
+      userId,
+      openClawId,
+      expiresAt,
+      scope: "onboarding",
+      revoked: false,
+    };
+    this.tokens.set(token, tokenRecord);
+    return tokenRecord;
+  }
+
+  findActiveToken(userId, openClawId, now = Date.now()) {
+    for (const record of this.tokens.values()) {
+      if (
+        record.userId === userId &&
+        record.openClawId === openClawId &&
+        !record.revoked &&
+        new Date(record.expiresAt).getTime() > now
+      ) {
+        return record;
+      }
+    }
+    return null;
+  }
+
+  getToken(token) {
+    return this.tokens.get(token) ?? null;
+  }
+
+  revokeToken(token) {
+    const record = this.tokens.get(token);
+    if (record) {
+      record.revoked = true;
+    }
+  }
+
+  consumeNonce(nonce) {
+    if (this.nonces.has(nonce)) {
+      return false;
+    }
+    this.nonces.add(nonce);
+    return true;
+  }
+
+  addLog(entry) {
+    this.logs.push({ timestamp: nowIso(), ...entry });
+  }
+
+  getLogs(userId, now = Date.now()) {
+    const cutoff = now - 7 * 86400000;
+    return this.logs.filter(
+      (entry) =>
+        entry.userId === userId &&
+        new Date(entry.timestamp).getTime() >= cutoff,
+    );
+  }
+
+  resolveStatus(userId, openClawId, now = Date.now()) {
+    const redeem = this.getRedeem(userId, openClawId);
+    if (!redeem) {
+      return {
+        service_active: false,
+        onboarding_day: null,
+        adoption_state: null,
+        dominant_scene: null,
+        expires_at: null,
+        heartbeat_ttl_seconds: 0,
+      };
+    }
+
+    const expiresAtMs = new Date(redeem.expiresAt).getTime();
+    if (now > expiresAtMs) {
+      redeem.serviceActive = false;
+      return {
+        service_active: false,
+        onboarding_day: null,
+        adoption_state: null,
+        dominant_scene: null,
+        expires_at: redeem.expiresAt,
+        heartbeat_ttl_seconds: 0,
+      };
+    }
+
+    const logs = this.getLogs(userId, now).filter(
+      (entry) => entry.openClawId === openClawId && entry.type === "success",
+    );
+    const sceneCounts = new Map();
+    for (const entry of logs) {
+      sceneCounts.set(entry.scene, (sceneCounts.get(entry.scene) ?? 0) + 1);
+    }
+    let dominantScene = null;
+    let maxCount = 0;
+    for (const [scene, count] of sceneCounts.entries()) {
+      if (count > maxCount) {
+        dominantScene = scene;
+        maxCount = count;
+      }
+    }
+
+    let adoptionState = "not_started";
+    if (logs.length === 1) {
+      adoptionState = "first_success";
+    } else if (logs.length >= 2 && logs.length <= 3) {
+      adoptionState = "repeated";
+    } else if (logs.length >= 4 || maxCount >= 3) {
+      adoptionState = "habitual";
+    }
+
+    return {
+      service_active: true,
+      onboarding_day: dayNumber(redeem.activatedAt, now),
+      adoption_state: adoptionState,
+      dominant_scene: dominantScene,
+      expires_at: redeem.expiresAt,
+      heartbeat_ttl_seconds: HEARTBEAT_TTL_SECONDS,
+    };
+  }
+}
+
+export const db = new MockDb();
+db.reset();

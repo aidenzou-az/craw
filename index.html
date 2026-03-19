@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenClaw Lazy Pack Onboarding</title>
+    <style>
+      :root {
+        --bg: #f4f1e8;
+        --card: #fffaf0;
+        --ink: #1f1e1b;
+        --muted: #676155;
+        --line: #d8cfbf;
+        --accent: #0f766e;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        background:
+          radial-gradient(circle at top left, rgba(15,118,110,0.08), transparent 28%),
+          linear-gradient(180deg, #f8f5ee, var(--bg));
+        color: var(--ink);
+      }
+      main {
+        max-width: 920px;
+        margin: 0 auto;
+        padding: 56px 24px 80px;
+      }
+      h1 {
+        font-size: clamp(2.4rem, 5vw, 4.6rem);
+        line-height: 0.96;
+        margin: 0 0 16px;
+        letter-spacing: -0.04em;
+      }
+      p.lead {
+        max-width: 760px;
+        font-size: 1.15rem;
+        line-height: 1.7;
+        color: var(--muted);
+        margin: 0 0 32px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 18px;
+        margin-top: 28px;
+      }
+      .card {
+        background: color-mix(in srgb, var(--card) 92%, white);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 22px;
+        box-shadow: 0 10px 40px rgba(31, 30, 27, 0.06);
+      }
+      .label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--accent);
+        margin-bottom: 12px;
+      }
+      code {
+        font-family: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+        background: rgba(15, 118, 110, 0.08);
+        padding: 2px 6px;
+        border-radius: 8px;
+      }
+      ul {
+        padding-left: 18px;
+        margin: 12px 0 0;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="label">EdgeOne Pages + Node Functions</div>
+      <h1>OpenClaw Lazy Pack Onboarding</h1>
+      <p class="lead">
+        This deployment hosts the Feishu lazy-pack onboarding prototype on EdgeOne Pages.
+        Static docs stay in the repository, and backend APIs are exposed via <code>/node-functions</code>-based routes.
+      </p>
+      <div class="grid">
+        <section class="card">
+          <div class="label">API Routes</div>
+          <ul>
+            <li><code>POST /api/open-claw/onboarding-redeem</code></li>
+            <li><code>POST /api/open-claw/onboarding-token</code></li>
+            <li><code>GET /api/open-claw/onboarding-status</code></li>
+          </ul>
+        </section>
+        <section class="card">
+          <div class="label">Repository</div>
+          <ul>
+            <li><a href="./live/lazy-pack-onboarding/README.md">Solution docs</a></li>
+            <li><a href="./apps/openclaw-onboarding/README.md">Node.js prototype</a></li>
+            <li><a href="./live/lazy-pack-onboarding/skill.md">Latest skill.md</a></li>
+          </ul>
+        </section>
+        <section class="card">
+          <div class="label">Deploy Notes</div>
+          <ul>
+            <li>Root project directory: repository root</li>
+            <li>Runtime: Node.js 20 via <code>edgeone.json</code></li>
+            <li>Functions are exposed from <code>/node-functions</code></li>
+          </ul>
+        </section>
+      </div>
+    </main>
+  </body>
+  </html>

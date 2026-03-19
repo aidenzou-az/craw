@@ -1,0 +1,11 @@
+{
+  "name": "craw",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "test:onboarding": "npm --workspace apps/openclaw-onboarding test"
+  }
+}

@@ -1,0 +1,12 @@
+node_modules/
+.DS_Store
+*.log
+coverage/
+.turbo/
+dist/
+build/
+.tmp/
+.cache/
+tmp/
+*.tsbuildinfo
+apps/openclaw-onboarding/.runtime/
