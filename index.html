@@ -81,11 +81,11 @@
   </head>
   <body>
     <main>
-      <div class="label">EdgeOne Pages + Node Functions</div>
+      <div class="label">EdgeOne Pages + Edge Functions + KV</div>
       <h1>OpenClaw Lazy Pack Onboarding</h1>
       <p class="lead">
         This deployment hosts the Feishu lazy-pack onboarding prototype on EdgeOne Pages.
-        Static docs stay in the repository, and backend APIs are exposed via <code>/node-functions</code>-based routes.
+        Static docs stay in the repository, and backend APIs are exposed via Edge Functions with KV-backed state.
       </p>
       <div class="grid">
         <section class="card">
@@ -108,8 +108,9 @@
           <div class="label">Deploy Notes</div>
           <ul>
             <li>Root project directory: repository root</li>
-            <li>Runtime: Node.js 20 via <code>edgeone.json</code></li>
-            <li>Functions are exposed from <code>/node-functions</code></li>
+            <li>Functions are exposed from <code>/functions</code></li>
+            <li>Edge KV binding expected: <code>ONBOARDING_KV</code></li>
+            <li>Static build config lives in <code>edgeone.json</code></li>
           </ul>
         </section>
       </div>

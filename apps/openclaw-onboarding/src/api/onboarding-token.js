@@ -1,23 +1,23 @@
 import { fail, ok, parseJsonBody } from "../utils/http.js";
 import { verifyHostRequest } from "../services/auth.js";
 import { issueOnboardingToken } from "../services/onboarding-service.js";
-import { db } from "../store/mock-db.js";
 
-export async function handleOnboardingToken(req) {
+export async function handleOnboardingToken(req, repo) {
   if (req.method !== "POST") {
     return fail(405, "METHOD_NOT_ALLOWED", "Expected POST");
   }
   const body = parseJsonBody(req);
-  const auth = verifyHostRequest({
+  const auth = await verifyHostRequest({
     req,
     body,
-    db,
+    repo,
     expectedPath: "/api/open-claw/onboarding-token",
   });
   if (!auth.ok) {
     return fail(401, auth.code, auth.message);
   }
-  const result = issueOnboardingToken({
+  const result = await issueOnboardingToken({
+    repo,
     userId: body.user_id,
     openClawId: body.open_claw_id,
   });

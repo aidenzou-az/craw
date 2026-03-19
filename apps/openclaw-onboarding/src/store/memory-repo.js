@@ -9,7 +9,11 @@ function dayNumber(activatedAt, now = Date.now()) {
   return Math.max(1, Math.min(7, Math.floor(diff / 86400000) + 1));
 }
 
-class MockDb {
+export class MemoryRepository {
+  constructor() {
+    this.reset();
+  }
+
   reset() {
     this.redeems = new Map();
     this.tokens = new Map();
@@ -28,11 +32,11 @@ class MockDb {
     this.openClaws = new Map([["oc_123", { openClawId: "oc_123", userId: "u_123" }]]);
   }
 
-  getBenefit(userId) {
+  async getBenefit(userId) {
     return this.userBenefits.get(userId) ?? null;
   }
 
-  getOpenClaw(openClawId) {
+  async getOpenClaw(openClawId) {
     return this.openClaws.get(openClawId) ?? null;
   }
 
@@ -40,7 +44,7 @@ class MockDb {
     return `${userId}:${openClawId}`;
   }
 
-  redeem({ userId, openClawId, benefitCode }, now = Date.now()) {
+  async redeem({ userId, openClawId, benefitCode }, now = Date.now()) {
     const key = this.getRedeemKey(userId, openClawId);
     const existing = this.redeems.get(key);
     if (existing) {
@@ -61,11 +65,11 @@ class MockDb {
     return record;
   }
 
-  getRedeem(userId, openClawId) {
+  async getRedeem(userId, openClawId) {
     return this.redeems.get(this.getRedeemKey(userId, openClawId)) ?? null;
   }
 
-  issueToken({ userId, openClawId }, token, expiresAt) {
+  async issueToken({ userId, openClawId }, token, expiresAt) {
     const tokenRecord = {
       token,
       userId,
@@ -78,7 +82,7 @@ class MockDb {
     return tokenRecord;
   }
 
-  findActiveToken(userId, openClawId, now = Date.now()) {
+  async findActiveToken(userId, openClawId, now = Date.now()) {
     for (const record of this.tokens.values()) {
       if (
         record.userId === userId &&
@@ -92,18 +96,18 @@ class MockDb {
     return null;
   }
 
-  getToken(token) {
+  async getToken(token) {
     return this.tokens.get(token) ?? null;
   }
 
-  revokeToken(token) {
+  async revokeToken(token) {
     const record = this.tokens.get(token);
     if (record) {
       record.revoked = true;
     }
   }
 
-  consumeNonce(nonce) {
+  async consumeNonce(nonce) {
     if (this.nonces.has(nonce)) {
       return false;
     }
@@ -111,11 +115,11 @@ class MockDb {
     return true;
   }
 
-  addLog(entry) {
+  async addLog(entry) {
     this.logs.push({ timestamp: nowIso(), ...entry });
   }
 
-  getLogs(userId, now = Date.now()) {
+  async getLogs(userId, now = Date.now()) {
     const cutoff = now - 7 * 86400000;
     return this.logs.filter(
       (entry) =>
@@ -124,8 +128,8 @@ class MockDb {
     );
   }
 
-  resolveStatus(userId, openClawId, now = Date.now()) {
-    const redeem = this.getRedeem(userId, openClawId);
+  async resolveStatus(userId, openClawId, now = Date.now()) {
+    const redeem = await this.getRedeem(userId, openClawId);
     if (!redeem) {
       return {
         service_active: false,
@@ -150,7 +154,7 @@ class MockDb {
       };
     }
 
-    const logs = this.getLogs(userId, now).filter(
+    const logs = (await this.getLogs(userId, now)).filter(
       (entry) => entry.openClawId === openClawId && entry.type === "success",
     );
     const sceneCounts = new Map();
@@ -186,5 +190,4 @@ class MockDb {
   }
 }
 
-export const db = new MockDb();
-db.reset();
+export const db = new MemoryRepository();

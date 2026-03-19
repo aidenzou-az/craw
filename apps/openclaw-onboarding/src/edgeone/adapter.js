@@ -1,4 +1,5 @@
 import { dispatch } from "../api/router.js";
+import { KvRepository } from "../store/kv-repo.js";
 
 function headersToObject(headers) {
   const output = {};
@@ -22,6 +23,8 @@ export async function dispatchEdgeOne(context, forcedPath = null) {
     headers,
     body,
     edgeoneContext: context,
+  }, {
+    repo: new KvRepository(context.env?.ONBOARDING_KV),
   });
 
   return new Response(response.body, {

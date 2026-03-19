@@ -1,22 +1,14 @@
-import crypto from "node:crypto";
-import { HOST_SIGNATURE_SECRET } from "../config.js";
-
-function sha256(input) {
-  return crypto.createHash("sha256").update(input).digest("hex");
-}
+import { signHostPayload } from "../utils/crypto.js";
 
 function normalizeAuthHeader(headers) {
   return headers.authorization ?? headers.Authorization ?? "";
 }
 
-export function signHostRequest({ method, path, timestamp, nonce, body }) {
-  const bodyHash = sha256(typeof body === "string" ? body : JSON.stringify(body ?? {}));
-  return sha256(
-    [method.toUpperCase(), path, String(timestamp), nonce, bodyHash, HOST_SIGNATURE_SECRET].join(":"),
-  );
+export async function signHostRequest({ method, path, timestamp, nonce, body }) {
+  return signHostPayload({ method, path, timestamp, nonce, body });
 }
 
-export function verifyHostRequest({ req, body, db, expectedPath }) {
+export async function verifyHostRequest({ req, body, repo, expectedPath }) {
   const auth = normalizeAuthHeader(req.headers ?? {});
   if (!auth.startsWith("Bearer ")) {
     return { ok: false, code: "UNAUTHORIZED", message: "Missing host token" };
@@ -40,11 +32,11 @@ export function verifyHostRequest({ req, body, db, expectedPath }) {
     return { ok: false, code: "FORBIDDEN", message: "Timestamp out of window" };
   }
 
-  if (!db.consumeNonce(`host:${nonce}`)) {
+  if (!(await repo.consumeNonce(`host:${nonce}`))) {
     return { ok: false, code: "INVALID_NONCE", message: "Nonce already used" };
   }
 
-  const expectedSignature = signHostRequest({
+  const expectedSignature = await signHostRequest({
     method: req.method,
     path: expectedPath,
     timestamp,
@@ -62,13 +54,13 @@ export function verifyHostRequest({ req, body, db, expectedPath }) {
   return { ok: true, userId };
 }
 
-export function verifyOnboardingToken({ req, db }) {
+export async function verifyOnboardingToken({ req, repo }) {
   const auth = normalizeAuthHeader(req.headers ?? {});
   if (!auth.startsWith("Bearer ")) {
     return { ok: false, code: "UNAUTHORIZED", message: "Missing onboarding token" };
   }
   const token = auth.slice("Bearer ".length);
-  const record = db.getToken(token);
+  const record = await repo.getToken(token);
   if (!record || record.revoked) {
     return { ok: false, code: "UNAUTHORIZED", message: "Invalid token" };
   }

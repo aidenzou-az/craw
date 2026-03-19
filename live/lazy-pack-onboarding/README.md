@@ -15,6 +15,10 @@
 - [`skill.md`](./skill.md)：最终可上线的 Open Claw 上手服务技能文档。
 - [`../../apps/openclaw-onboarding/`](../../apps/openclaw-onboarding/)：Node.js 原型实现，包含 serverless handlers、runtime mock 和测试。
 
+## 当前实现形态
+
+当前工程原型已经按 EdgeOne Pages 的 Edge Functions 形态整理，并为 KV 持久化预留了接入点。
+
 ## 核心原则
 
 - 不改变 Open Claw 原有身份。

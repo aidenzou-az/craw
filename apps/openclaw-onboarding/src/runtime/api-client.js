@@ -42,7 +42,7 @@ export class LocalApiClient {
   async #callHostSigned(method, path, body) {
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const nonce = `nonce_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
-    const signature = signHostRequest({ method, path, timestamp, nonce, body });
+    const signature = await signHostRequest({ method, path, timestamp, nonce, body });
     const response = await this.dispatch({
       method,
       path,

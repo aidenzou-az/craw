@@ -4,11 +4,11 @@ Node.js prototype for the Feishu lazy-pack Open Claw onboarding service.
 
 This app contains:
 
-- serverless-style handlers
-- mock stores and log-based status resolution
+- Edge Functions-compatible handlers
+- in-memory and KV-backed repositories
 - Open Claw runtime mock
 - tests for the main onboarding flow
-- EdgeOne Pages adapter used by `/node-functions/*`
+- EdgeOne Pages adapter used by `/functions/*`
 
 ## Structure
 
@@ -29,7 +29,11 @@ npm test
 This repo is structured for Tencent Cloud EdgeOne Pages:
 
 - static landing page: repository root `index.html`
-- Node Functions entrypoints: `node-functions/`
+- Edge Functions entrypoints: `functions/`
 - app source: `apps/openclaw-onboarding/`
 
 The EdgeOne function wrappers import the app handlers from `apps/openclaw-onboarding/src/edgeone/adapter.js`.
+
+Required KV binding:
+
+- `ONBOARDING_KV`

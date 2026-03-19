@@ -2,13 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { dispatchEdgeOne } from "../src/edgeone/adapter.js";
 import { signHostRequest } from "../src/services/auth.js";
-import { db } from "../src/store/mock-db.js";
-
-test.beforeEach(() => {
-  db.reset();
-});
+import { MemoryKvBinding } from "../src/store/memory-kv.js";
 
 test("edgeone adapter converts request to onboarding redeem response", async () => {
+  const kv = new MemoryKvBinding();
   const body = JSON.stringify({
     user_id: "u_123",
     open_claw_id: "oc_123",
@@ -16,7 +13,7 @@ test("edgeone adapter converts request to onboarding redeem response", async () 
   });
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const nonce = `nonce_${Math.random().toString(16).slice(2)}`;
-  const signature = signHostRequest({
+  const signature = await signHostRequest({
     method: "POST",
     path: "/api/open-claw/onboarding-redeem",
     timestamp,
@@ -37,6 +34,7 @@ test("edgeone adapter converts request to onboarding redeem response", async () 
         },
         body,
       }),
+      env: { ONBOARDING_KV: kv },
     },
     "/api/open-claw/onboarding-redeem",
   );

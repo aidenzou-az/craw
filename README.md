@@ -49,7 +49,7 @@ npm run test:onboarding
 当前仓库已经按 EdgeOne Pages 的约定整理：
 
 - 静态首页：[`index.html`](./index.html)
-- Node Functions：[`node-functions/`](./node-functions/)
+- Edge Functions：[`functions/`](./functions/)
 - Node.js 原型实现：[`apps/openclaw-onboarding/`](./apps/openclaw-onboarding/)
 - EdgeOne 配置：[`edgeone.json`](./edgeone.json)
 
@@ -58,5 +58,6 @@ npm run test:onboarding
 - GitHub 仓库根目录作为 Project Root
 - 安装命令使用 `npm install`
 - 输出目录保持仓库根目录
+- 在 EdgeOne 项目中绑定 KV：`ONBOARDING_KV`
 
 [![Use EdgeOne Pages to deploy](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Faidenzou-az%2Fcraw)

@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { dispatch } from "../src/api/router.js";
-import { db } from "../src/store/mock-db.js";
+import { db } from "../src/store/memory-repo.js";
 import { LocalApiClient } from "../src/runtime/api-client.js";
 import { FileStateStore } from "../src/runtime/state-store.js";
 import { SkillLoader } from "../src/runtime/skill-loader.js";
@@ -49,7 +49,7 @@ test("runtime initializes redeem -> token -> status", async () => {
 test("runtime can proactively reach user", async () => {
   const { runtime, sender, dir } = await makeRuntime();
   await runtime.initialize();
-  db.addLog({ type: "success", userId: "u_123", openClawId: "oc_123", scene: "draft" });
+  await db.addLog({ type: "success", userId: "u_123", openClawId: "oc_123", scene: "draft" });
   const result = await runtime.maybeProactiveReach();
   assert.equal(result.sent, true);
   assert.equal(sender.messages.length, 1);

@@ -1,21 +1,15 @@
-import crypto from "node:crypto";
-import { db } from "../store/mock-db.js";
+import { randomToken } from "../utils/crypto.js";
 
-function tokenValue(userId, openClawId) {
-  const seed = `${userId}:${openClawId}:${Date.now()}:${Math.random()}`;
-  return `otk_${crypto.createHash("sha256").update(seed).digest("hex").slice(0, 24)}`;
-}
-
-export function redeemBenefit({ userId, openClawId, benefitCode }) {
-  const benefit = db.getBenefit(userId);
+export async function redeemBenefit({ repo, userId, openClawId, benefitCode }) {
+  const benefit = await repo.getBenefit(userId);
   if (!benefit || !benefit.enabled || benefit.benefitCode !== benefitCode) {
     return { error: { code: "BENEFIT_NOT_FOUND", message: "Benefit not found" } };
   }
-  const claw = db.getOpenClaw(openClawId);
-  if (!claw || claw.userId !== userId) {
+  const claw = await repo.getOpenClaw(openClawId);
+  if (claw && claw.userId !== userId) {
     return { error: { code: "FORBIDDEN", message: "Open Claw does not belong to user" } };
   }
-  const record = db.redeem({ userId, openClawId, benefitCode });
+  const record = await repo.redeem({ userId, openClawId, benefitCode });
   return {
     data: {
       redeemed: true,
@@ -26,13 +20,13 @@ export function redeemBenefit({ userId, openClawId, benefitCode }) {
   };
 }
 
-export function issueOnboardingToken({ userId, openClawId }) {
-  const redeem = db.getRedeem(userId, openClawId);
+export async function issueOnboardingToken({ repo, userId, openClawId }) {
+  const redeem = await repo.getRedeem(userId, openClawId);
   if (!redeem || !redeem.serviceActive) {
     return { error: { code: "FORBIDDEN", message: "Onboarding service is not active" } };
   }
 
-  const active = db.findActiveToken(userId, openClawId);
+  const active = await repo.findActiveToken(userId, openClawId);
   if (active) {
     return {
       data: {
@@ -47,9 +41,9 @@ export function issueOnboardingToken({ userId, openClawId }) {
   }
 
   const expiresAt = redeem.expiresAt;
-  const record = db.issueToken(
+  const record = await repo.issueToken(
     { userId, openClawId },
-    tokenValue(userId, openClawId),
+    await randomToken("otk"),
     expiresAt,
   );
   return {
@@ -64,10 +58,10 @@ export function issueOnboardingToken({ userId, openClawId }) {
   };
 }
 
-export function getOnboardingStatus({ userId, openClawId }) {
-  return { data: db.resolveStatus(userId, openClawId) };
+export async function getOnboardingStatus({ repo, userId, openClawId }) {
+  return { data: await repo.resolveStatus(userId, openClawId) };
 }
 
-export function addMockSuccessLog({ userId, openClawId, scene }) {
-  db.addLog({ type: "success", userId, openClawId, scene });
+export async function addMockSuccessLog({ repo, userId, openClawId, scene }) {
+  await repo.addLog({ type: "success", userId, openClawId, scene });
 }
