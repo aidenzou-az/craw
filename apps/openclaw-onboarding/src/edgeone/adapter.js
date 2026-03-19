@@ -10,8 +10,16 @@ function headersToObject(headers) {
   return output;
 }
 
+function readDirectKvBinding() {
+  if (typeof ONBOARDING_KV !== "undefined") {
+    return ONBOARDING_KV;
+  }
+  return null;
+}
+
 function resolveKvBinding(context) {
   return (
+    readDirectKvBinding() ??
     context.env?.ONBOARDING_KV ??
     context.ONBOARDING_KV ??
     globalThis.ONBOARDING_KV ??
