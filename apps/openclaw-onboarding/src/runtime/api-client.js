@@ -1,5 +1,3 @@
-import { signHostRequest } from "../services/auth.js";
-
 function authHeaders(token) {
   return token ? { authorization: `Bearer ${token}` } : {};
 }
@@ -8,18 +6,20 @@ export class LocalApiClient {
   constructor({
     dispatch,
     hostId = null,
+    hostAccessToken = null,
     ownerOpenId = null,
     ownerUnionId = null,
     feishuAppId = null,
-    feishuAppSecret = null,
+    feishuHostToken = null,
     baseUrl,
   }) {
     this.dispatch = dispatch;
     this.hostId = hostId;
+    this.hostAccessToken = hostAccessToken;
     this.ownerOpenId = ownerOpenId;
     this.ownerUnionId = ownerUnionId;
     this.feishuAppId = feishuAppId;
-    this.feishuAppSecret = feishuAppSecret;
+    this.feishuHostToken = feishuHostToken;
     this.baseUrl = baseUrl;
   }
 
@@ -30,7 +30,7 @@ export class LocalApiClient {
       owner_open_id: this.ownerOpenId,
       owner_union_id: this.ownerUnionId,
       feishu_app_id: this.feishuAppId,
-      feishu_app_secret: this.feishuAppSecret,
+      feishu_host_token: this.feishuHostToken,
     };
     const response = await this.dispatch({
       method: "POST",
@@ -44,6 +44,7 @@ export class LocalApiClient {
     const decoded = this.#decode(response);
     if (decoded.success) {
       this.hostId = decoded.data.host_id;
+      this.hostAccessToken = decoded.data.host_access_token;
     }
     return decoded;
   }
@@ -54,7 +55,7 @@ export class LocalApiClient {
       open_claw_id: openClawId,
       benefit_code: "feishu_lazy_pack_onboarding",
     };
-    return this.#callHostSigned("POST", "/api/open-claw/onboarding-redeem", body);
+    return this.#callHostAuthenticated("POST", "/api/open-claw/onboarding-redeem", body);
   }
 
   async token({ userId, openClawId }) {
@@ -62,7 +63,7 @@ export class LocalApiClient {
       user_id: userId,
       open_claw_id: openClawId,
     };
-    return this.#callHostSigned("POST", "/api/open-claw/onboarding-token", body);
+    return this.#callHostAuthenticated("POST", "/api/open-claw/onboarding-token", body);
   }
 
   async status(token) {
@@ -76,28 +77,20 @@ export class LocalApiClient {
     return this.#decode(response);
   }
 
-  async #callHostSigned(method, path, body) {
-    if (!this.hostId || !this.feishuAppSecret) {
-      throw new Error("Missing host registration or Feishu app secret");
+  async #callHostAuthenticated(method, path, body) {
+    if (!this.hostId || !this.hostAccessToken) {
+      throw new Error("Missing host registration or host access token");
     }
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const nonce = `nonce_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
-    const signature = await signHostRequest({
-      method,
-      path,
-      timestamp,
-      nonce,
-      body,
-      secret: this.feishuAppSecret,
-    });
     const response = await this.dispatch({
       method,
       path,
       headers: {
+        authorization: `Bearer ${this.hostAccessToken}`,
         "x-host-id": this.hostId,
         "x-host-timestamp": timestamp,
         "x-host-nonce": nonce,
-        "x-host-signature": signature,
       },
       body,
       baseUrl: this.baseUrl,

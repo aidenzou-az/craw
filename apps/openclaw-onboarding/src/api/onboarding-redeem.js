@@ -11,7 +11,6 @@ export async function handleOnboardingRedeem(req, repo) {
     req,
     body,
     repo,
-    expectedPath: "/api/open-claw/onboarding-redeem",
   });
   if (!auth.ok) {
     return fail(401, auth.code, auth.message);

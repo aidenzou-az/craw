@@ -1,11 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { dispatch } from "../src/api/router.js";
-import { signHostRequest } from "../src/services/auth.js";
 import { db } from "../src/store/memory-repo.js";
 
 const FEISHU_APP_ID = "cli_test_app";
-const FEISHU_APP_SECRET = "secret_test_123";
+const FEISHU_HOST_TOKEN = "tenant_access_token_test_123";
 const OWNER_OPEN_ID = "ou_123";
 const OWNER_UNION_ID = "un_123";
 
@@ -20,33 +19,30 @@ async function registerHost(userId = "u_123", openClawId = "oc_123") {
       owner_open_id: OWNER_OPEN_ID,
       owner_union_id: OWNER_UNION_ID,
       feishu_app_id: FEISHU_APP_ID,
-      feishu_app_secret: FEISHU_APP_SECRET,
+      feishu_host_token: FEISHU_HOST_TOKEN,
     },
   });
-  return JSON.parse(response.body).data.host_id;
+  const payload = JSON.parse(response.body).data;
+  return {
+    hostId: payload.host_id,
+    hostAccessToken: payload.host_access_token,
+  };
 }
 
-function hostReq(path, body, hostId) {
+function hostReq(path, body, hostId, hostAccessToken) {
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const nonce = `nonce_${Math.random().toString(16).slice(2)}`;
-  return signHostRequest({
-    method: "POST",
-    path,
-    timestamp,
-    nonce,
-    body,
-    secret: FEISHU_APP_SECRET,
-  }).then((signature) => ({
+  return {
     method: "POST",
     path,
     headers: {
+      authorization: `Bearer ${hostAccessToken}`,
       "x-host-id": hostId,
       "x-host-timestamp": timestamp,
       "x-host-nonce": nonce,
-      "x-host-signature": signature,
     },
     body,
-  }));
+  };
 }
 
 test.beforeEach(() => {
@@ -54,14 +50,14 @@ test.beforeEach(() => {
 });
 
 test("redeem is idempotent", async () => {
-  const hostId = await registerHost();
+  const { hostId, hostAccessToken } = await registerHost();
   const body = {
     user_id: "u_123",
     open_claw_id: "oc_123",
     benefit_code: "feishu_lazy_pack_onboarding",
   };
-  const first = await dispatch(await hostReq("/api/open-claw/onboarding-redeem", body, hostId));
-  const second = await dispatch(await hostReq("/api/open-claw/onboarding-redeem", body, hostId));
+  const first = await dispatch(hostReq("/api/open-claw/onboarding-redeem", body, hostId, hostAccessToken));
+  const second = await dispatch(hostReq("/api/open-claw/onboarding-redeem", body, hostId, hostAccessToken));
   const firstPayload = JSON.parse(first.body);
   const secondPayload = JSON.parse(second.body);
   assert.equal(first.status, 200);
@@ -70,30 +66,40 @@ test("redeem is idempotent", async () => {
 });
 
 test("token requires valid benefit but does not require prior redeem", async () => {
-  const hostId = await registerHost();
+  const { hostId, hostAccessToken } = await registerHost();
   const body = {
     user_id: "u_123",
     open_claw_id: "oc_123",
   };
-  const response = await dispatch(await hostReq("/api/open-claw/onboarding-token", body, hostId));
+  const response = await dispatch(hostReq("/api/open-claw/onboarding-token", body, hostId, hostAccessToken));
   assert.equal(response.status, 200);
   assert.ok(JSON.parse(response.body).data.onboarding_token);
 });
 
 test("status returns repeated when logs indicate reuse", async () => {
-  const hostId = await registerHost();
+  const { hostId, hostAccessToken } = await registerHost();
   await dispatch(
-    await hostReq("/api/open-claw/onboarding-redeem", {
-      user_id: "u_123",
-      open_claw_id: "oc_123",
-      benefit_code: "feishu_lazy_pack_onboarding",
-    }, hostId),
+    hostReq(
+      "/api/open-claw/onboarding-redeem",
+      {
+        user_id: "u_123",
+        open_claw_id: "oc_123",
+        benefit_code: "feishu_lazy_pack_onboarding",
+      },
+      hostId,
+      hostAccessToken,
+    ),
   );
   const tokenResp = await dispatch(
-    await hostReq("/api/open-claw/onboarding-token", {
-      user_id: "u_123",
-      open_claw_id: "oc_123",
-    }, hostId),
+    hostReq(
+      "/api/open-claw/onboarding-token",
+      {
+        user_id: "u_123",
+        open_claw_id: "oc_123",
+      },
+      hostId,
+      hostAccessToken,
+    ),
   );
   const token = JSON.parse(tokenResp.body).data.onboarding_token;
   await db.addLog({ type: "success", userId: "u_123", openClawId: "oc_123", scene: "summarize" });
@@ -113,5 +119,6 @@ test("status returns repeated when logs indicate reuse", async () => {
 test("host register is idempotent for same Open Claw binding", async () => {
   const first = await registerHost();
   const second = await registerHost();
-  assert.equal(first, second);
+  assert.equal(first.hostId, second.hostId);
+  assert.equal(first.hostAccessToken, second.hostAccessToken);
 });

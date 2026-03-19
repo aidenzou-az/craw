@@ -19,7 +19,7 @@
 
 推荐使用已注册宿主的身份作为一级认证来源。
 
-宿主需先通过 `POST /api/open-claw/host-register` 完成一次性绑定，之后 token 获取接口只接受宿主签名请求。
+宿主需先通过 `POST /api/open-claw/host-register` 完成一次性绑定，之后 token 获取接口只接受宿主 access token 请求。
 
 推荐使用以下组合：
 
@@ -28,22 +28,22 @@
 - `user_id`
 - `open_claw_id`
 - `X-Host-Id`
+- `Authorization: Bearer <host_access_token>`
 
 ### 推荐
 
 - `X-Host-Timestamp`
 - `X-Host-Nonce`
-- `X-Host-Signature`
 
 ## 推荐请求格式
 
 ### 请求头
 
 ```http
+Authorization: Bearer <host_access_token>
 X-Host-Id: host_xxx
 X-Host-Timestamp: 1742366400
 X-Host-Nonce: 7b3de9b2-4b9a-4a8d-bbf8-7c3b7a6d1d9f
-X-Host-Signature: <signature>
 Content-Type: application/json
 ```
 
@@ -63,9 +63,9 @@ Content-Type: application/json
 1. 校验 `host_id` 是否存在且状态可用
 2. 校验 `open_claw_id` 是否确实归属于该宿主
 3. 校验 `user_id` 对应权益绑定的 owner 身份是否与宿主 owner 一致
-4. 校验时间戳是否在允许窗口内，例如 5 分钟
-5. 校验 nonce 是否未被使用
-6. 校验宿主签名是否正确
+4. 校验 `host_access_token` 是否与该宿主绑定且未失效
+5. 校验时间戳是否在允许窗口内，例如 5 分钟
+6. 校验 nonce 是否未被使用
 7. 校验该 `user_id + open_claw_id` 是否已存在有效 onboarding token
 
 如果已存在有效 token，可以：
@@ -188,7 +188,7 @@ Open Claw 可重新调用 token 获取接口换取新 token。
 
 - `host_id` 识别宿主实例
 - 服务端校验 `user_id` 和 `open_claw_id`
-- 增加时间戳 + nonce + 签名
+- 增加 `host_access_token` + 时间戳 + nonce
 - token 绑定 `user_id + open_claw_id`
 - token 只允许访问 onboarding 相关接口
 

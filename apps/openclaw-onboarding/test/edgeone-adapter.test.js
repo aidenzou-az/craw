@@ -1,11 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { dispatchEdgeOne } from "../src/edgeone/adapter.js";
-import { signHostRequest } from "../src/services/auth.js";
 import { MemoryKvBinding } from "../src/store/memory-kv.js";
 
 const FEISHU_APP_ID = "cli_test_app";
-const FEISHU_APP_SECRET = "secret_test_123";
+const FEISHU_HOST_TOKEN = "tenant_access_token_test_123";
 
 async function registerHost(kv) {
   const response = await dispatchEdgeOne(
@@ -19,7 +18,7 @@ async function registerHost(kv) {
           owner_open_id: "ou_123",
           owner_union_id: "un_123",
           feishu_app_id: FEISHU_APP_ID,
-          feishu_app_secret: FEISHU_APP_SECRET,
+          feishu_host_token: FEISHU_HOST_TOKEN,
         }),
       }),
       env: { ONBOARDING_KV: kv },
@@ -27,12 +26,15 @@ async function registerHost(kv) {
     "/api/open-claw/host-register",
   );
   const payload = await response.json();
-  return payload.data.host_id;
+  return {
+    hostId: payload.data.host_id,
+    hostAccessToken: payload.data.host_access_token,
+  };
 }
 
 test("edgeone adapter converts request to onboarding redeem response", async () => {
   const kv = new MemoryKvBinding();
-  const hostId = await registerHost(kv);
+  const { hostId, hostAccessToken } = await registerHost(kv);
   const body = JSON.stringify({
     user_id: "u_123",
     open_claw_id: "oc_123",
@@ -40,24 +42,16 @@ test("edgeone adapter converts request to onboarding redeem response", async () 
   });
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const nonce = `nonce_${Math.random().toString(16).slice(2)}`;
-  const signature = await signHostRequest({
-    method: "POST",
-    path: "/api/open-claw/onboarding-redeem",
-    timestamp,
-    nonce,
-    body,
-    secret: FEISHU_APP_SECRET,
-  });
 
   const response = await dispatchEdgeOne(
     {
       request: new Request("https://example.com/api/open-claw/onboarding-redeem", {
         method: "POST",
         headers: {
+          authorization: `Bearer ${hostAccessToken}`,
           "x-host-id": hostId,
           "x-host-timestamp": timestamp,
           "x-host-nonce": nonce,
-          "x-host-signature": signature,
           "content-type": "application/json",
         },
         body,
@@ -93,7 +87,7 @@ test("edgeone adapter returns structured 503 when KV binding is missing", async 
 test("edgeone adapter can read KV binding from global scope fallback", async () => {
   const kv = new MemoryKvBinding();
   globalThis.ONBOARDING_KV = kv;
-  const hostId = await registerHost(kv);
+  const { hostId, hostAccessToken } = await registerHost(kv);
 
   const body = JSON.stringify({
     user_id: "u_123",
@@ -102,14 +96,6 @@ test("edgeone adapter can read KV binding from global scope fallback", async () 
   });
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const nonce = `nonce_${Math.random().toString(16).slice(2)}`;
-  const signature = await signHostRequest({
-    method: "POST",
-    path: "/api/open-claw/onboarding-redeem",
-    timestamp,
-    nonce,
-    body,
-    secret: FEISHU_APP_SECRET,
-  });
 
   try {
     const response = await dispatchEdgeOne(
@@ -117,10 +103,10 @@ test("edgeone adapter can read KV binding from global scope fallback", async () 
         request: new Request("https://example.com/api/open-claw/onboarding-redeem", {
           method: "POST",
           headers: {
+            authorization: `Bearer ${hostAccessToken}`,
             "x-host-id": hostId,
             "x-host-timestamp": timestamp,
             "x-host-nonce": nonce,
-            "x-host-signature": signature,
             "content-type": "application/json",
           },
           body,

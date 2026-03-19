@@ -20,6 +20,7 @@
   "base_url": "https://your-onboarding-api.example.com",
   "host_registered": true,
   "host_id": "host_xxx",
+  "host_access_token": "hat_xxx",
   "owner_open_id": "ou_123",
   "owner_union_id": "un_123",
   "redeemed": true,
@@ -52,6 +53,9 @@
 
 - `host_id`
   当前宿主注册成功后返回的唯一宿主标识
+
+- `host_access_token`
+  当前宿主注册成功后返回的平台侧宿主访问凭证
 
 - `owner_open_id`
   当前宿主绑定的飞书用户 open_id

@@ -143,6 +143,7 @@ export class OpenClawRuntime {
       ...state,
       host_registered: true,
       host_id: response.data.host_id,
+      host_access_token: response.data.host_access_token,
       owner_open_id: response.data.owner_open_id,
       owner_union_id: response.data.owner_union_id,
       host_registered_at: new Date().toISOString(),

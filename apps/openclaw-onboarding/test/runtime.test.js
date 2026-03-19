@@ -20,7 +20,7 @@ async function makeRuntime() {
     ownerOpenId: "ou_123",
     ownerUnionId: "un_123",
     feishuAppId: "cli_test_app",
-    feishuAppSecret: "secret_test_123",
+    feishuHostToken: "tenant_access_token_test_123",
     baseUrl: "http://local.test",
   });
   const sender = new MockFeishuSender();
@@ -45,6 +45,7 @@ test("runtime initializes token -> redeem -> status", async () => {
   const state = await runtime.initialize();
   assert.equal(state.host_registered, true);
   assert.ok(state.host_id);
+  assert.ok(state.host_access_token);
   assert.equal(state.redeemed, true);
   assert.ok(state.onboarding_token);
   assert.equal(state.status_cache.service_active, true);

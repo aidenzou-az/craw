@@ -1,12 +1,5 @@
-import { randomToken, verifyFeishuAppSecretShape } from "../utils/crypto.js";
-
-function encodeSecret(secret) {
-  return btoa(secret);
-}
-
-export function decodeSecret(encoded) {
-  return atob(encoded);
-}
+import { randomToken } from "../utils/crypto.js";
+import { verifyFeishuHostToken } from "./feishu-verifier.js";
 
 export async function registerHost({
   repo,
@@ -15,7 +8,7 @@ export async function registerHost({
   ownerOpenId,
   ownerUnionId,
   feishuAppId,
-  feishuAppSecret,
+  feishuHostToken,
 }) {
   const benefit = await repo.getBenefit(userId);
   if (!benefit || !benefit.enabled) {
@@ -35,9 +28,13 @@ export async function registerHost({
     };
   }
 
-  if (!verifyFeishuAppSecretShape({ feishuAppId, feishuAppSecret })) {
+  const feishuVerification = await verifyFeishuHostToken({
+    feishuAppId,
+    feishuHostToken,
+  });
+  if (!feishuVerification.ok) {
     return {
-      error: { code: "FEISHU_APP_INVALID", message: "Invalid Feishu app credentials" },
+      error: { code: "FEISHU_HOST_TOKEN_INVALID", message: feishuVerification.message },
     };
   }
 
@@ -59,6 +56,7 @@ export async function registerHost({
         data: {
           host_id: existing.hostId,
           host_registered: true,
+          host_access_token: existing.hostAccessToken,
           owner_open_id: existing.ownerOpenId,
           owner_union_id: existing.ownerUnionId,
         },
@@ -70,19 +68,22 @@ export async function registerHost({
   }
 
   const hostId = await randomToken("host");
+  const hostAccessToken = await randomToken("hat");
   const record = await repo.registerHost({
     hostId,
+    hostAccessToken,
     userId,
     openClawId,
     ownerOpenId,
     ownerUnionId,
     feishuAppId,
-    encryptedFeishuAppSecret: encodeSecret(feishuAppSecret),
+    feishuVerificationSource: feishuVerification.verifiedBy,
   });
   return {
     data: {
       host_id: record.hostId,
       host_registered: true,
+      host_access_token: record.hostAccessToken,
       owner_open_id: record.ownerOpenId,
       owner_union_id: record.ownerUnionId,
     },

@@ -11,7 +11,6 @@ export async function handleOnboardingToken(req, repo) {
     req,
     body,
     repo,
-    expectedPath: "/api/open-claw/onboarding-token",
   });
   if (!auth.ok) {
     return fail(401, auth.code, auth.message);

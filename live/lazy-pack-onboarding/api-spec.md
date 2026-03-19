@@ -34,10 +34,10 @@
 请求头示例：
 
 ```http
+Authorization: Bearer <host_access_token>
 X-Host-Id: host_xxx
 X-Host-Timestamp: 1742366400
 X-Host-Nonce: 7b3de9b2-4b9a-4a8d-bbf8-7c3b7a6d1d9f
-X-Host-Signature: <signature>
 Content-Type: application/json
 ```
 
@@ -64,7 +64,7 @@ Content-Type: application/json
   "owner_open_id": "ou_123",
   "owner_union_id": "un_123",
   "feishu_app_id": "cli_xxx",
-  "feishu_app_secret": "app_secret_xxx"
+  "feishu_host_token": "tenant_access_token_xxx"
 }
 ```
 
@@ -76,6 +76,7 @@ Content-Type: application/json
   "data": {
     "host_id": "host_xxx",
     "host_registered": true,
+    "host_access_token": "hat_xxx",
     "owner_open_id": "ou_123",
     "owner_union_id": "un_123"
   }
@@ -86,7 +87,9 @@ Content-Type: application/json
 
 - 必须幂等
 - 同一 `open_claw_id` 不允许绑定到不同宿主
-- 平台需加密存储 `feishu_app_secret`
+- 平台不接收原始 `feishu_app_secret`
+- Open Claw 应先在本地用 `app_id/app_secret` 向飞书换取 `feishu_host_token`
+- 测试阶段可将“飞书轻量接口验证通过”视为同时通过宿主归属校验
 
 ## 3. 获取 onboarding token
 
@@ -136,15 +139,15 @@ Content-Type: application/json
 
 ### 认证
 
-这个接口不能裸开放，必须依赖已注册宿主的签名认证。
+这个接口不能裸开放，必须依赖已注册宿主的 host access token 认证。
 
 请求头示例：
 
 ```http
+Authorization: Bearer <host_access_token>
 X-Host-Id: host_xxx
 X-Host-Timestamp: 1742366400
 X-Host-Nonce: 7b3de9b2-4b9a-4a8d-bbf8-7c3b7a6d1d9f
-X-Host-Signature: <signature>
 Content-Type: application/json
 ```
 

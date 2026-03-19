@@ -64,6 +64,15 @@ onboarding token 不应内置在本服务中，也不要求系统预先注入。
 
 `POST {OPEN_CLAW_ONBOARDING_API_BASE_URL}/api/open-claw/host-register`
 
+宿主注册时，不要把 `feishu_app_secret` 发送给平台。
+
+你应先在本地使用 `feishu_app_id + feishu_app_secret` 向飞书官方换取一个临时 `feishu_host_token`，再把这个 token 提交给宿主注册接口做验证。
+
+测试阶段可以采用以下假设：
+
+- 如果平台拿到 `feishu_host_token` 后，通过调用飞书官方轻量接口验证成功
+- 则同时视为通过宿主归属校验
+
 token 获取用于确认当前用户和当前 Open Claw 具备启动本服务的资格，但不应先消耗懒人包权益。
 
 权益核销应发生在 token 获取成功之后、正式启动 7 天服务之前。

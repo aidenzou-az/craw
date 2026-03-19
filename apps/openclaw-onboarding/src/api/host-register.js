@@ -13,7 +13,7 @@ export async function handleHostRegister(req, repo) {
     ownerOpenId: body.owner_open_id,
     ownerUnionId: body.owner_union_id ?? null,
     feishuAppId: body.feishu_app_id,
-    feishuAppSecret: body.feishu_app_secret,
+    feishuHostToken: body.feishu_host_token,
   });
   if (result.error) {
     return fail(403, result.error.code, result.error.message);

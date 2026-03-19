@@ -1,33 +1,23 @@
-import { signHostPayload } from "../utils/crypto.js";
-import { decodeSecret } from "./host-service.js";
-
 function normalizeAuthHeader(headers) {
   return headers.authorization ?? headers.Authorization ?? "";
 }
 
-export async function signHostRequest({
-  method,
-  path,
-  timestamp,
-  nonce,
-  body,
-  secret,
-}) {
-  return signHostPayload({ method, path, timestamp, nonce, body, secret });
-}
-
-export async function verifyHostRequest({ req, body, repo, expectedPath }) {
+export async function verifyHostRequest({ req, body, repo }) {
   const hostId = req.headers["x-host-id"];
   if (!hostId) {
     return { ok: false, code: "UNAUTHORIZED", message: "Missing host id" };
   }
 
+  const auth = normalizeAuthHeader(req.headers ?? {});
+  if (!auth.startsWith("Bearer ")) {
+    return { ok: false, code: "UNAUTHORIZED", message: "Missing host access token" };
+  }
+  const hostAccessToken = auth.slice("Bearer ".length);
+
   const timestamp = req.headers["x-host-timestamp"];
   const nonce = req.headers["x-host-nonce"];
-  const signature = req.headers["x-host-signature"];
-
-  if (!timestamp || !nonce || !signature) {
-    return { ok: false, code: "INVALID_SIGNATURE", message: "Missing host signature headers" };
+  if (!timestamp || !nonce) {
+    return { ok: false, code: "INVALID_REQUEST", message: "Missing host timestamp or nonce" };
   }
 
   const now = Date.now();
@@ -42,6 +32,9 @@ export async function verifyHostRequest({ req, body, repo, expectedPath }) {
   const host = await repo.getHostById(hostId);
   if (!host || host.status !== "active") {
     return { ok: false, code: "HOST_NOT_REGISTERED", message: "Host is not registered" };
+  }
+  if (hostAccessToken !== host.hostAccessToken) {
+    return { ok: false, code: "UNAUTHORIZED", message: "Invalid host access token" };
   }
 
   if (body.open_claw_id !== host.openClawId) {
@@ -59,17 +52,6 @@ export async function verifyHostRequest({ req, body, repo, expectedPath }) {
     return { ok: false, code: "HOST_IDENTITY_MISMATCH", message: "Host owner open_id mismatch" };
   }
 
-  const expectedSignature = await signHostRequest({
-    method: req.method,
-    path: expectedPath,
-    timestamp,
-    nonce,
-    body,
-    secret: decodeSecret(host.encryptedFeishuAppSecret),
-  });
-  if (signature !== expectedSignature) {
-    return { ok: false, code: "INVALID_SIGNATURE", message: "Signature mismatch" };
-  }
   return { ok: true, userId: body.user_id, hostId };
 }
 
