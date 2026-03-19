@@ -44,3 +44,20 @@ test("edgeone adapter converts request to onboarding redeem response", async () 
   assert.equal(payload.success, true);
   assert.equal(payload.data.redeemed, true);
 });
+
+test("edgeone adapter returns structured 503 when KV binding is missing", async () => {
+  const response = await dispatchEdgeOne(
+    {
+      request: new Request("https://example.com/api/open-claw/onboarding-status", {
+        method: "GET",
+      }),
+      env: {},
+    },
+    "/api/open-claw/onboarding-status",
+  );
+
+  assert.equal(response.status, 503);
+  const payload = await response.json();
+  assert.equal(payload.success, false);
+  assert.equal(payload.error.code, "SERVICE_MISCONFIGURED");
+});
