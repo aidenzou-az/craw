@@ -34,6 +34,9 @@ export class OpenClawRuntime {
   async initialize() {
     let state = await this.loadState();
     state = await this.skillLoader.refresh(state, { force: !state.skill_last_fetched_at });
+    if (!state.onboarding_token || this.#tokenExpired(state)) {
+      state = await this.#refreshToken(state);
+    }
     if (!state.redeemed) {
       const redeemed = await this.apiClient.redeem({
         userId: this.userId,
@@ -44,9 +47,6 @@ export class OpenClawRuntime {
       }
       state.redeemed = true;
       state.expires_at = redeemed.data.expires_at;
-    }
-    if (!state.onboarding_token || this.#tokenExpired(state)) {
-      state = await this.#refreshToken(state);
     }
     if (!state.status_cache) {
       state = await this.#refreshStatus(state);

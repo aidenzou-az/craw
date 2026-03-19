@@ -21,9 +21,14 @@ export async function redeemBenefit({ repo, userId, openClawId, benefitCode }) {
 }
 
 export async function issueOnboardingToken({ repo, userId, openClawId }) {
-  const redeem = await repo.getRedeem(userId, openClawId);
-  if (!redeem || !redeem.serviceActive) {
-    return { error: { code: "FORBIDDEN", message: "Onboarding service is not active" } };
+  const benefit = await repo.getBenefit(userId);
+  if (!benefit || !benefit.enabled) {
+    return { error: { code: "BENEFIT_NOT_FOUND", message: "Benefit not found" } };
+  }
+
+  const claw = await repo.getOpenClaw(openClawId);
+  if (claw && claw.userId !== userId) {
+    return { error: { code: "FORBIDDEN", message: "Open Claw does not belong to user" } };
   }
 
   const active = await repo.findActiveToken(userId, openClawId);
@@ -40,7 +45,8 @@ export async function issueOnboardingToken({ repo, userId, openClawId }) {
     };
   }
 
-  const expiresAt = redeem.expiresAt;
+  const redeem = await repo.getRedeem(userId, openClawId);
+  const expiresAt = redeem?.expiresAt ?? new Date(Date.now() + 7 * 86400000).toISOString();
   const record = await repo.issueToken(
     { userId, openClawId },
     await randomToken("otk"),

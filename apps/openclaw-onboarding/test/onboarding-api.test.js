@@ -45,14 +45,14 @@ test("redeem is idempotent", async () => {
   assert.equal(firstPayload.data.redeem_id, secondPayload.data.redeem_id);
 });
 
-test("token requires redeemed benefit", async () => {
+test("token requires valid benefit but does not require prior redeem", async () => {
   const body = {
     user_id: "u_123",
     open_claw_id: "oc_123",
   };
   const response = await dispatch(await hostReq("/api/open-claw/onboarding-token", body));
-  assert.equal(response.status, 403);
-  assert.equal(JSON.parse(response.body).error.code, "FORBIDDEN");
+  assert.equal(response.status, 200);
+  assert.ok(JSON.parse(response.body).data.onboarding_token);
 });
 
 test("status returns repeated when logs indicate reuse", async () => {

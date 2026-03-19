@@ -135,4 +135,3 @@ Onboarding 不应只在用户来找 Open Claw 时被动生效。
 - 1 个后台低频心跳更新任务
 - 1 套采用状态粗判规则
 - 1 份最终 `skill.md`
-- 可选但推荐的事件上报接口：`POST /api/open-claw/onboarding-events`

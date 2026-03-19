@@ -72,9 +72,12 @@
 
 ## token 获取规则
 
-在换 token 之前，建议先确认 `redeemed=true`。
+换 token 不要求本地已经完成核销。
 
-如果本地未核销，应先调用权益核销接口。
+更合理的顺序是：
+
+1. 先换取 onboarding token，确认当前用户和当前 Open Claw 具备启动资格
+2. 再调用权益核销接口，正式启动 7 天服务
 
 ### 需要获取 token 的情况
 
@@ -127,6 +130,8 @@ Open Claw 不应长期只依赖本地缓存中的 `skill.md`。
 检查本地是否已有 onboarding_token
   ->
 如果没有或已过期，先换 token
+  ->
+如果尚未完成权益核销，则调用权益核销接口
   ->
 检查本地 status_cache
   ->

@@ -2,7 +2,7 @@
 
 ## 目标
 
-为 `POST /api/open-claw/onboarding-token` 提供一个可工程落地的认证与签发方案，使 Open Claw 能为当前真实用户换取一个用户专属 onboarding token，并将其本地保存，用于后续状态获取和事件上报。
+为 `POST /api/open-claw/onboarding-token` 提供一个可工程落地的认证与签发方案，使 Open Claw 能为当前真实用户换取一个用户专属 onboarding token，并将其本地保存，用于后续状态获取。
 
 ## 设计原则
 
@@ -193,14 +193,14 @@ Open Claw 可重新调用 token 获取接口换取新 token。
 
 ## 与权益核销的关系
 
-推荐先核销，再换 token。
+推荐先换 token，再核销。
 
 顺序如下：
 
-1. 调用 `POST /api/open-claw/onboarding-redeem`
-2. 核销成功后，再调用 `POST /api/open-claw/onboarding-token`
+1. 调用 `POST /api/open-claw/onboarding-token`
+2. token 获取成功后，再调用 `POST /api/open-claw/onboarding-redeem`
 
 服务端在 token 获取接口也应再次校验：
 
-- 当前用户是否已成功核销权益
-- 当前服务是否仍处于有效窗口内
+- 当前用户是否具备懒人包权益
+- 当前 Open Claw 是否归属于该用户

@@ -37,7 +37,7 @@ test.beforeEach(() => {
   db.reset();
 });
 
-test("runtime initializes redeem -> token -> status", async () => {
+test("runtime initializes token -> redeem -> status", async () => {
   const { runtime, dir } = await makeRuntime();
   const state = await runtime.initialize();
   assert.equal(state.redeemed, true);
