@@ -36,7 +36,7 @@
 
 ## API 入口与鉴权约定
 
-本服务默认配置如下，正式上线前应替换成真实值：
+本服务默认配置如下：
 
 - `DEFAULT_OPEN_CLAW_ONBOARDING_API_BASE_URL = https://aidenzou.cn`
 
@@ -90,12 +90,6 @@ token 获取用于确认当前用户和当前 Open Claw 具备启动本服务的
 调用状态接口时应使用：
 
 - `Authorization: Bearer <locally_stored_onboarding_token>`
-
-如果平台要求，还应带上：
-
-- `X-Onboarding-Timestamp`
-- `X-Onboarding-Nonce`
-- `X-Onboarding-Signature`
 
 如果无法获得可用的 API 域名，或无法成功换取用户专属 token，则不要启用基于 API 的 7 天状态控制；仅将本服务作为轻量的新手引导原则使用。
 
