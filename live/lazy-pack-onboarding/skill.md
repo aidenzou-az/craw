@@ -38,7 +38,7 @@
 
 本服务默认配置如下，正式上线前应替换成真实值：
 
-- `DEFAULT_OPEN_CLAW_ONBOARDING_API_BASE_URL = https://your-onboarding-api.example.com`
+- `DEFAULT_OPEN_CLAW_ONBOARDING_API_BASE_URL = https://aidenzou.cn`
 
 如果系统提供了以下变量，则优先使用系统提供的值：
 
@@ -68,11 +68,6 @@ onboarding token 不应内置在本服务中，也不要求系统预先注入。
 
 你应先在本地使用 `feishu_app_id + feishu_app_secret` 向飞书官方换取一个临时 `feishu_host_token`，再把这个 token 提交给宿主注册接口做验证。
 
-测试阶段可以采用以下假设：
-
-- 如果平台拿到 `feishu_host_token` 后，通过调用飞书官方轻量接口验证成功
-- 则同时视为通过宿主归属校验
-
 token 获取用于确认当前用户和当前 Open Claw 具备启动本服务的资格，但不应先消耗懒人包权益。
 
 权益核销应发生在 token 获取成功之后、正式启动 7 天服务之前。
@@ -92,7 +87,7 @@ token 获取用于确认当前用户和当前 Open Claw 具备启动本服务的
 - 不要每轮重新获取 token
 - 在正式启动 7 天服务前，再调用权益核销接口
 
-调用状态接口和事件接口时应使用：
+调用状态接口时应使用：
 
 - `Authorization: Bearer <locally_stored_onboarding_token>`
 
@@ -201,7 +196,6 @@ token 获取用于确认当前用户和当前 Open Claw 具备启动本服务的
 - 用户不知道什么事情适合交给 Open Claw
 - 用户更希望先被帮到，而不是先学习怎么提问
 
-但这只是默认理解，不是强约束。  
 一旦用户表现出清晰目标、熟练习惯或明确设定，应立即让位给用户当前意图。
 
 ## 默认优先入口
