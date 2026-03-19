@@ -10,7 +10,7 @@ import { FileStateStore } from "../src/runtime/state-store.js";
 import { SkillLoader } from "../src/runtime/skill-loader.js";
 import { MockFeishuSender } from "../src/runtime/mock-feishu-sender.js";
 import { OpenClawRuntime } from "../src/runtime/openclaw-runtime.js";
-import { DEFAULT_SKILL_PATH } from "../src/config.js";
+import { DEFAULT_SKILL_PATH } from "../src/runtime-config.js";
 
 async function makeRuntime() {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), "onboarding-runtime-"));

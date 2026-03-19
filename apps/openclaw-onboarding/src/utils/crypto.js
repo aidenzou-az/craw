@@ -1,4 +1,4 @@
-import { HOST_SIGNATURE_SECRET } from "../config.js";
+import { HOST_SIGNATURE_SECRET } from "../constants.js";
 
 const encoder = new TextEncoder();
 

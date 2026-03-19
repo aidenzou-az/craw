@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
-import { DEFAULT_SKILL_PATH, SKILL_REFRESH_INTERVAL_MS } from "../config.js";
+import { SKILL_REFRESH_INTERVAL_MS } from "../constants.js";
+import { DEFAULT_SKILL_PATH } from "../runtime-config.js";
 
 export class SkillLoader {
   constructor({ skillPath = DEFAULT_SKILL_PATH } = {}) {

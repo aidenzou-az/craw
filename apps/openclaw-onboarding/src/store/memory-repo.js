@@ -1,4 +1,4 @@
-import { HEARTBEAT_TTL_SECONDS } from "../config.js";
+import { HEARTBEAT_TTL_SECONDS } from "../constants.js";
 
 function nowIso(now = Date.now()) {
   return new Date(now).toISOString();

@@ -49,7 +49,7 @@ npm run test:onboarding
 当前仓库已经按 EdgeOne Pages 的约定整理：
 
 - 静态首页：[`index.html`](./index.html)
-- Edge Functions：[`functions/`](./functions/)
+- Edge Functions：[`edge-functions/`](./edge-functions/)
 - Node.js 原型实现：[`apps/openclaw-onboarding/`](./apps/openclaw-onboarding/)
 - EdgeOne 配置：[`edgeone.json`](./edgeone.json)
 

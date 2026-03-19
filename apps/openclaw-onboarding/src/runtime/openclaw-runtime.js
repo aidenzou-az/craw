@@ -1,7 +1,7 @@
 import {
   DEFAULT_BASE_URL,
   PROACTIVE_MIN_INTERVAL_MS,
-} from "../config.js";
+} from "../constants.js";
 
 export class OpenClawRuntime {
   constructor({

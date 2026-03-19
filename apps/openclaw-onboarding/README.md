@@ -8,7 +8,7 @@ This app contains:
 - in-memory and KV-backed repositories
 - Open Claw runtime mock
 - tests for the main onboarding flow
-- EdgeOne Pages adapter used by `/functions/*`
+- EdgeOne Pages adapter used by `/edge-functions/*`
 
 ## Structure
 
@@ -29,7 +29,7 @@ npm test
 This repo is structured for Tencent Cloud EdgeOne Pages:
 
 - static landing page: repository root `index.html`
-- Edge Functions entrypoints: `functions/`
+- Edge Functions entrypoints: `edge-functions/`
 - app source: `apps/openclaw-onboarding/`
 
 The EdgeOne function wrappers import the app handlers from `apps/openclaw-onboarding/src/edgeone/adapter.js`.
