@@ -44,10 +44,12 @@ Open Claw 完全停止这套机制
 - 计算 `adoption_state`
 - 计算 `dominant_scene`
 - 在到期后关闭服务
+- 提供飞书宿主 token 轻量校验能力
 
 ### Open Claw 负责
 
 - 首次启动时先完成宿主注册
+- 在本地用 `feishu_app_id + feishu_app_secret` 向飞书换取 `feishu_host_token`
 - 按 skill 中定义的规则先获取用户专属 onboarding token
 - 首次正式启动 7 天上手服务时核销懒人包权益
 - 将 onboarding token 保存在本地私有状态中
@@ -73,8 +75,9 @@ Open Claw 不应在每次对话都调用状态 API。
 
 推荐规则：
 
-- 首次需要使用上手服务时，如果本地没有 onboarding token，先调用 token 获取接口
 - 首次需要使用上手服务时，如果当前 Open Claw 尚未完成宿主注册，先调用宿主注册接口
+- 宿主注册时不上传 `feishu_app_secret`，只上传本地向飞书换得的 `feishu_host_token`
+- 首次需要使用上手服务时，如果本地没有 onboarding token，先调用 token 获取接口
 - 获取到 token 后，保存在本地私有状态中，后续复用
 - 正式启动 7 天服务前，再调用权益核销接口
 - 如果本地没有缓存状态，先拉一次状态
@@ -182,8 +185,10 @@ Open Claw 不应在每次对话都调用状态 API。
 - 状态 API 必须幂等、可缓存、轻量
 - 权益核销接口必须幂等，避免重复扣减
 - token 获取接口必须有更上层身份校验，不能裸开放
+- `host-register` 应支持老宿主记录的自愈升级；若历史记录缺少 `host_access_token`，再次注册时自动补发并回写
 - 状态计算放在后台，不要放在用户主链路
 - 心跳刷新间隔要由服务端返回，便于后续统一调整
 - 即使状态异常，也不能妨碍 Open Claw 的正常对话能力
 - Open Claw 本地保存的 onboarding token 必须是用户专属的最小权限 token，只允许访问 onboarding 相关接口
 - API 入口应优先通过系统变量提供；skill 中的默认入口只作为缺省兜底配置
+- 飞书轻量校验接口地址应支持通过 `OPEN_CLAW_FEISHU_HOST_VERIFY_URL` 覆盖，便于按环境切换

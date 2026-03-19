@@ -27,8 +27,19 @@ function resolveKvBinding(context) {
   );
 }
 
+function applyRuntimeOverrides(context) {
+  const verifyUrl =
+    context.env?.OPEN_CLAW_FEISHU_HOST_VERIFY_URL ??
+    context.OPEN_CLAW_FEISHU_HOST_VERIFY_URL ??
+    null;
+  if (verifyUrl) {
+    globalThis.OPEN_CLAW_FEISHU_HOST_VERIFY_URL = verifyUrl;
+  }
+}
+
 export async function dispatchEdgeOne(context, forcedPath = null) {
   try {
+    applyRuntimeOverrides(context);
     const request = context.request;
     const method = request.method;
     const path = forcedPath ?? new URL(request.url).pathname;
