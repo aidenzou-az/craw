@@ -52,6 +52,21 @@ export async function registerHost({
       existing.ownerOpenId === ownerOpenId &&
       existing.feishuAppId === feishuAppId
     ) {
+      if (!existing.hostAccessToken) {
+        const upgraded = await repo.registerHost({
+          ...existing,
+          hostAccessToken: await randomToken("hat"),
+        });
+        return {
+          data: {
+            host_id: upgraded.hostId,
+            host_registered: true,
+            host_access_token: upgraded.hostAccessToken,
+            owner_open_id: upgraded.ownerOpenId,
+            owner_union_id: upgraded.ownerUnionId,
+          },
+        };
+      }
       return {
         data: {
           host_id: existing.hostId,
