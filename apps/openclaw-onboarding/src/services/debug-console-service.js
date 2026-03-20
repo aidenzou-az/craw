@@ -84,6 +84,10 @@ export async function getDebugConsoleSnapshot({ repo, openClawId, now = Date.now
     .filter((entry) => entry.openClawId === openClawId)
     .slice(-20)
     .reverse();
+  const heartbeatEvents = events.filter(
+    (entry) => entry.action === "onboarding_status" && entry.outcome === "success",
+  );
+  const lastHeartbeatAt = heartbeatEvents[0]?.timestamp ?? null;
 
   const snapshot = {
     open_claw_id: openClawId,
@@ -108,6 +112,8 @@ export async function getDebugConsoleSnapshot({ repo, openClawId, now = Date.now
     dominant_scene: status.dominant_scene,
     expires_at: status.expires_at,
     heartbeat_ttl_seconds: status.heartbeat_ttl_seconds,
+    heartbeat_count: heartbeatEvents.length,
+    last_heartbeat_at: lastHeartbeatAt,
   };
 
   return {
@@ -150,6 +156,8 @@ export async function listDebugConsoleItems({ repo, now = Date.now() }) {
         activated_at: snapshot.activated_at ?? null,
         last_event_at: lastEventAt,
         latest_activity_at: latestActivityAt,
+        heartbeat_count: snapshot.heartbeat_count,
+        last_heartbeat_at: snapshot.last_heartbeat_at,
       });
     }
   }

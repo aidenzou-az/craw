@@ -162,6 +162,64 @@ test("debug console returns current snapshot and recent events", async () => {
   assert.equal(payload.data.snapshot.redeemed, true);
   assert.equal(payload.data.expectation.status, "healthy");
   assert.equal(payload.data.recent_events[0].action, "onboarding_redeem");
+  assert.equal(payload.data.snapshot.heartbeat_count, 0);
+});
+
+test("debug console counts onboarding-status requests as heartbeats", async () => {
+  const { hostId, hostAccessToken } = await registerHost();
+  await dispatch(
+    hostReq(
+      "/api/open-claw/onboarding-token",
+      {
+        user_id: "u_123",
+        open_claw_id: "oc_123",
+      },
+      hostId,
+      hostAccessToken,
+    ),
+  );
+  await dispatch(
+    hostReq(
+      "/api/open-claw/onboarding-redeem",
+      {
+        user_id: "u_123",
+        open_claw_id: "oc_123",
+        benefit_code: "feishu_lazy_pack_onboarding",
+      },
+      hostId,
+      hostAccessToken,
+    ),
+  );
+  const tokenResp = await dispatch(
+    hostReq(
+      "/api/open-claw/onboarding-token",
+      {
+        user_id: "u_123",
+        open_claw_id: "oc_123",
+      },
+      hostId,
+      hostAccessToken,
+    ),
+  );
+  const token = JSON.parse(tokenResp.body).data.onboarding_token;
+
+  await dispatch({
+    method: "GET",
+    path: "/api/open-claw/onboarding-status",
+    headers: { authorization: `Bearer ${token}` },
+    body: null,
+  });
+
+  const response = await dispatch({
+    method: "GET",
+    path: "/api/open-claw/debug-console",
+    query: { open_claw_id: "oc_123" },
+    headers: {},
+    body: null,
+  });
+  const payload = JSON.parse(response.body);
+  assert.equal(payload.data.snapshot.heartbeat_count, 1);
+  assert.ok(payload.data.snapshot.last_heartbeat_at);
 });
 
 test("debug console can list known open claws", async () => {
@@ -179,4 +237,5 @@ test("debug console can list known open claws", async () => {
   assert.equal(payload.data.items.length, 1);
   assert.equal(payload.data.items[0].open_claw_id, "oc_123");
   assert.ok(payload.data.items[0].first_seen_at);
+  assert.equal(payload.data.items[0].heartbeat_count, 0);
 });

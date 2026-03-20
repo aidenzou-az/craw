@@ -325,6 +325,8 @@
           ["onboarding_day", snapshot.onboarding_day],
           ["adoption_state", snapshot.adoption_state],
           ["dominant_scene", snapshot.dominant_scene],
+          ["heartbeat_count", snapshot.heartbeat_count],
+          ["last_heartbeat_at", formatTime(snapshot.last_heartbeat_at)],
           ["expires_at", formatTime(snapshot.expires_at)],
         ]);
 
@@ -370,6 +372,8 @@
             <small>阶段：${item.adoption_state ?? "-"}</small>
             <small>Day：${item.onboarding_day ?? "-"}</small>
             <small>最近活动：${formatTime(item.latest_activity_at)}</small>
+            <small>最近心跳：${formatTime(item.last_heartbeat_at)}</small>
+            <small>心跳次数：${item.heartbeat_count ?? 0}</small>
             <small>首次记录：${formatTime(item.first_seen_at)}</small>
             <small>激活时间：${formatTime(item.activated_at)}</small>
           </div>
