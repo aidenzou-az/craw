@@ -91,7 +91,10 @@ export class KvRepository {
     const results = [];
     let cursor = undefined;
     do {
-      const page = await this.kv.list({ prefix: "openclaw:", cursor });
+      const options = cursor
+        ? { prefix: "openclaw:", cursor }
+        : { prefix: "openclaw:" };
+      const page = await this.kv.list(options);
       for (const key of page.keys ?? []) {
         const record = await readJson(this.kv, key.name);
         if (record) {
