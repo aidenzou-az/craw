@@ -16,7 +16,22 @@ export async function handleHostRegister(req, repo) {
     feishuHostToken: body.feishu_host_token,
   });
   if (result.error) {
+    await repo.addLog({
+      type: "api",
+      action: "host_register",
+      outcome: "failed",
+      userId: body.user_id,
+      openClawId: body.open_claw_id,
+      errorCode: result.error.code,
+    });
     return fail(403, result.error.code, result.error.message);
   }
+  await repo.addLog({
+    type: "api",
+    action: "host_register",
+    outcome: "success",
+    userId: body.user_id,
+    openClawId: body.open_claw_id,
+  });
   return ok(result.data);
 }

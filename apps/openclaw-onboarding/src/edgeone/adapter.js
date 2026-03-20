@@ -42,7 +42,8 @@ export async function dispatchEdgeOne(context, forcedPath = null) {
     applyRuntimeOverrides(context);
     const request = context.request;
     const method = request.method;
-    const path = forcedPath ?? new URL(request.url).pathname;
+    const url = new URL(request.url);
+    const path = forcedPath ?? url.pathname;
     const headers = headersToObject(request.headers);
     const body =
       method === "GET" || method === "HEAD" ? null : await request.text();
@@ -66,6 +67,7 @@ export async function dispatchEdgeOne(context, forcedPath = null) {
         path,
         headers,
         body,
+        query: Object.fromEntries(url.searchParams.entries()),
         edgeoneContext: context,
       },
       {

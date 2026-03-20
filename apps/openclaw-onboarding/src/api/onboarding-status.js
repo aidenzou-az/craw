@@ -15,5 +15,12 @@ export async function handleOnboardingStatus(req, repo) {
     userId: auth.record.userId,
     openClawId: auth.record.openClawId,
   });
+  await repo.addLog({
+    type: "api",
+    action: "onboarding_status",
+    outcome: "success",
+    userId: auth.record.userId,
+    openClawId: auth.record.openClawId,
+  });
   return ok(result.data);
 }

@@ -2,6 +2,7 @@ import { handleOnboardingRedeem } from "./onboarding-redeem.js";
 import { handleHostRegister } from "./host-register.js";
 import { handleOnboardingToken } from "./onboarding-token.js";
 import { handleOnboardingStatus } from "./onboarding-status.js";
+import { handleDebugConsole } from "./test-console.js";
 import { fail } from "../utils/http.js";
 import { db } from "../store/memory-repo.js";
 
@@ -18,6 +19,9 @@ export async function dispatch(req, { repo = db } = {}) {
   }
   if (path === "/api/open-claw/onboarding-status") {
     return handleOnboardingStatus(req, repo);
+  }
+  if (path === "/api/open-claw/debug-console") {
+    return handleDebugConsole(req, repo);
   }
   return fail(404, "NOT_FOUND", "Route not found");
 }

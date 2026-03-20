@@ -13,6 +13,14 @@ export async function handleOnboardingToken(req, repo) {
     repo,
   });
   if (!auth.ok) {
+    await repo.addLog({
+      type: "api",
+      action: "onboarding_token",
+      outcome: "failed",
+      userId: body.user_id,
+      openClawId: body.open_claw_id,
+      errorCode: auth.code,
+    });
     return fail(401, auth.code, auth.message);
   }
   const result = await issueOnboardingToken({
@@ -21,7 +29,22 @@ export async function handleOnboardingToken(req, repo) {
     openClawId: body.open_claw_id,
   });
   if (result.error) {
+    await repo.addLog({
+      type: "api",
+      action: "onboarding_token",
+      outcome: "failed",
+      userId: body.user_id,
+      openClawId: body.open_claw_id,
+      errorCode: result.error.code,
+    });
     return fail(403, result.error.code, result.error.message);
   }
+  await repo.addLog({
+    type: "api",
+    action: "onboarding_token",
+    outcome: "success",
+    userId: body.user_id,
+    openClawId: body.open_claw_id,
+  });
   return ok(result.data);
 }

@@ -122,3 +122,26 @@ test("edgeone adapter can read KV binding from global scope fallback", async () 
     delete globalThis.ONBOARDING_KV;
   }
 });
+
+test("edgeone adapter serves debug console route", async () => {
+  const kv = new MemoryKvBinding();
+  await registerHost(kv);
+
+  const response = await dispatchEdgeOne(
+    {
+      request: new Request(
+        "https://example.com/api/open-claw/debug-console?open_claw_id=oc_123",
+        {
+          method: "GET",
+        },
+      ),
+      env: { ONBOARDING_KV: kv },
+    },
+    "/api/open-claw/debug-console",
+  );
+
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.success, true);
+  assert.equal(payload.data.snapshot.open_claw_id, "oc_123");
+});
