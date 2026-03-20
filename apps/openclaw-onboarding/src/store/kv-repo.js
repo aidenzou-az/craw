@@ -10,6 +10,9 @@ function dayNumber(activatedAt, now = Date.now()) {
 }
 
 async function readJson(kv, key) {
+  if (!key) {
+    return null;
+  }
   const raw = await kv.get(key);
   return raw ? JSON.parse(raw) : null;
 }
@@ -96,7 +99,11 @@ export class KvRepository {
         : { prefix: "openclaw:" };
       const page = await this.kv.list(options);
       for (const key of page.keys ?? []) {
-        const record = await readJson(this.kv, key.name);
+        const keyName =
+          typeof key === "string"
+            ? key
+            : key?.name ?? key?.key ?? null;
+        const record = await readJson(this.kv, keyName);
         if (record) {
           results.push(record);
         }
