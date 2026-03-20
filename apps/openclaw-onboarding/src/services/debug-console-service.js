@@ -118,3 +118,33 @@ export async function getDebugConsoleSnapshot({ repo, openClawId, now = Date.now
     },
   };
 }
+
+export async function listDebugConsoleItems({ repo, now = Date.now() }) {
+  const openClaws = await repo.listOpenClaws();
+  const items = [];
+
+  for (const openClaw of openClaws) {
+    const snapshotResult = await getDebugConsoleSnapshot({
+      repo,
+      openClawId: openClaw.openClawId,
+      now,
+    });
+    if (snapshotResult.data) {
+      const { snapshot, expectation } = snapshotResult.data;
+      items.push({
+        open_claw_id: snapshot.open_claw_id,
+        user_id: snapshot.user_id,
+        service_active: snapshot.service_active,
+        onboarding_day: snapshot.onboarding_day,
+        adoption_state: snapshot.adoption_state,
+        dominant_scene: snapshot.dominant_scene,
+        expectation_status: expectation.status,
+        expectation_message: expectation.message,
+        updated_at: snapshot.activated_at ?? snapshot.host_registered_at ?? null,
+      });
+    }
+  }
+
+  items.sort((a, b) => (a.open_claw_id < b.open_claw_id ? -1 : 1));
+  return { data: { items } };
+}

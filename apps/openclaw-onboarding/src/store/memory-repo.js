@@ -43,6 +43,10 @@ export class MemoryRepository {
     return this.openClaws.get(openClawId) ?? null;
   }
 
+  async listOpenClaws() {
+    return Array.from(this.openClaws.values());
+  }
+
   async registerHost(host) {
     const record = {
       ...host,

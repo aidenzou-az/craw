@@ -1,9 +1,16 @@
 import { fail, ok } from "../utils/http.js";
-import { getDebugConsoleSnapshot } from "../services/debug-console-service.js";
+import {
+  getDebugConsoleSnapshot,
+  listDebugConsoleItems,
+} from "../services/debug-console-service.js";
 
 export async function handleDebugConsole(req, repo) {
   if (req.method !== "GET") {
     return fail(405, "METHOD_NOT_ALLOWED", "Expected GET");
+  }
+  if (req.query?.list === "1") {
+    const result = await listDebugConsoleItems({ repo });
+    return ok(result.data);
   }
   const openClawId = req.query?.open_claw_id;
   if (!openClawId) {

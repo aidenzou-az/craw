@@ -39,7 +39,7 @@
         color: var(--muted);
         line-height: 1.6;
       }
-      .toolbar, .grid, .events {
+      .toolbar, .grid, .events, .layout {
         margin-top: 24px;
       }
       .toolbar {
@@ -70,6 +70,12 @@
         color: white;
         font: inherit;
         cursor: pointer;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 16px;
+        align-items: start;
       }
       .grid {
         display: grid;
@@ -137,63 +143,118 @@
         color: var(--bad);
         font-weight: 600;
       }
+      .list {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 12px;
+        box-shadow: 0 12px 32px rgba(32, 29, 24, 0.05);
+      }
+      .list h2 {
+        margin: 8px 8px 12px;
+        font-size: 1rem;
+      }
+      .list-items {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .list-item {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px;
+        background: white;
+        cursor: pointer;
+      }
+      .list-item.active {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
+      .list-item strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .list-item small {
+        display: block;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>Onboarding Test Console</h1>
-      <p>输入 <code>open_claw_id</code>，查看当前链路状态、最近事件和是否符合测试期预期。</p>
+      <p>先看当前有哪些 Open Claw，再查看某一个实例的链路状态、最近事件和是否符合测试期预期。</p>
 
       <div class="toolbar">
         <label>
           Open Claw ID
           <input id="openClawId" placeholder="例如 oc_123" />
         </label>
-        <button id="load">查询</button>
+        <button id="load">查询详情</button>
+        <button id="refreshList">刷新列表</button>
       </div>
 
       <div id="error" class="error" hidden></div>
 
-      <section class="grid" id="cards" hidden>
-        <article class="card">
-          <h2>当前判断</h2>
-          <p><span id="expectationStatus" class="status-pill"></span></p>
-          <p id="expectationMessage"></p>
-          <p class="muted" id="nextAction"></p>
-        </article>
+      <section class="layout">
+        <aside class="list">
+          <h2>Open Claw 列表</h2>
+          <div id="listItems" class="list-items">
+            <div class="muted">正在加载…</div>
+          </div>
+        </aside>
 
-        <article class="card">
-          <h2>服务快照</h2>
-          <dl id="snapshotMain"></dl>
-        </article>
+        <div>
+          <section class="grid" id="cards" hidden>
+            <article class="card">
+              <h2>当前判断</h2>
+              <p><span id="expectationStatus" class="status-pill"></span></p>
+              <p id="expectationMessage"></p>
+              <p class="muted" id="nextAction"></p>
+            </article>
 
-        <article class="card">
-          <h2>认证与凭证</h2>
-          <dl id="snapshotAuth"></dl>
-        </article>
-      </section>
+            <article class="card">
+              <h2>服务快照</h2>
+              <dl id="snapshotMain"></dl>
+            </article>
 
-      <section class="events" id="eventsSection" hidden>
-        <table>
-          <thead>
-            <tr>
-              <th>时间</th>
-              <th>动作</th>
-              <th>结果</th>
-              <th>错误码</th>
-            </tr>
-          </thead>
-          <tbody id="eventsBody"></tbody>
-        </table>
+            <article class="card">
+              <h2>认证与凭证</h2>
+              <dl id="snapshotAuth"></dl>
+            </article>
+          </section>
+
+          <section class="events" id="eventsSection" hidden>
+            <table>
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>动作</th>
+                  <th>结果</th>
+                  <th>错误码</th>
+                </tr>
+              </thead>
+              <tbody id="eventsBody"></tbody>
+            </table>
+          </section>
+        </div>
       </section>
     </main>
 
     <script>
       const input = document.getElementById("openClawId");
       const loadBtn = document.getElementById("load");
+      const refreshListBtn = document.getElementById("refreshList");
       const errorEl = document.getElementById("error");
       const cards = document.getElementById("cards");
       const eventsSection = document.getElementById("eventsSection");
+      const listItems = document.getElementById("listItems");
 
       function renderDl(el, rows) {
         el.innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v ?? "-"}</dd>`).join("");
@@ -262,7 +323,39 @@
           : `<tr><td colspan="4" class="muted">暂无事件</td></tr>`;
       }
 
+      async function loadList(selectedOpenClawId = null) {
+        const resp = await fetch("/api/open-claw/debug-console?list=1");
+        const payload = await resp.json();
+        if (!resp.ok || !payload.success) {
+          listItems.innerHTML = `<div class="muted">列表加载失败</div>`;
+          return;
+        }
+        const items = payload.data.items || [];
+        if (!items.length) {
+          listItems.innerHTML = `<div class="muted">当前还没有 Open Claw 记录</div>`;
+          return;
+        }
+        listItems.innerHTML = items.map((item) => `
+          <div class="list-item ${item.open_claw_id === selectedOpenClawId ? "active" : ""}" data-id="${item.open_claw_id}">
+            <strong>${item.open_claw_id}</strong>
+            <small>阶段：${item.adoption_state ?? "-"}</small>
+            <small>Day：${item.onboarding_day ?? "-"}</small>
+            <small>状态：${item.expectation_status}</small>
+          </div>
+        `).join("");
+
+        for (const node of listItems.querySelectorAll(".list-item")) {
+          node.addEventListener("click", () => {
+            const id = node.getAttribute("data-id");
+            input.value = id;
+            load();
+            loadList(id);
+          });
+        }
+      }
+
       loadBtn.addEventListener("click", load);
+      refreshListBtn.addEventListener("click", () => loadList(input.value.trim() || null));
       input.addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
           load();
@@ -270,6 +363,7 @@
       });
 
       const fromQuery = new URL(location.href).searchParams.get("open_claw_id");
+      loadList(fromQuery);
       if (fromQuery) {
         input.value = fromQuery;
         load();

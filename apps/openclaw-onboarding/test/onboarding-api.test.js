@@ -163,3 +163,19 @@ test("debug console returns current snapshot and recent events", async () => {
   assert.equal(payload.data.expectation.status, "healthy");
   assert.equal(payload.data.recent_events[0].action, "onboarding_redeem");
 });
+
+test("debug console can list known open claws", async () => {
+  await registerHost();
+  const response = await dispatch({
+    method: "GET",
+    path: "/api/open-claw/debug-console",
+    query: { list: "1" },
+    headers: {},
+    body: null,
+  });
+
+  assert.equal(response.status, 200);
+  const payload = JSON.parse(response.body);
+  assert.equal(payload.data.items.length, 1);
+  assert.equal(payload.data.items[0].open_claw_id, "oc_123");
+});

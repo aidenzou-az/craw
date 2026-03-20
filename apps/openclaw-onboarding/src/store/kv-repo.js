@@ -84,6 +84,25 @@ export class KvRepository {
     return null;
   }
 
+  async listOpenClaws() {
+    if (typeof this.kv.list !== "function") {
+      return [];
+    }
+    const results = [];
+    let cursor = undefined;
+    do {
+      const page = await this.kv.list({ prefix: "openclaw:", cursor });
+      for (const key of page.keys ?? []) {
+        const record = await readJson(this.kv, key.name);
+        if (record) {
+          results.push(record);
+        }
+      }
+      cursor = page.list_complete ? undefined : page.cursor;
+    } while (cursor);
+    return results;
+  }
+
   async registerHost(host) {
     const record = {
       ...host,
