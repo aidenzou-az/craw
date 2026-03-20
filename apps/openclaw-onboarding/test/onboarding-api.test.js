@@ -178,4 +178,5 @@ test("debug console can list known open claws", async () => {
   const payload = JSON.parse(response.body);
   assert.equal(payload.data.items.length, 1);
   assert.equal(payload.data.items[0].open_claw_id, "oc_123");
+  assert.ok(payload.data.items[0].first_seen_at);
 });

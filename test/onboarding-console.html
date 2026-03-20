@@ -341,6 +341,9 @@
             <small>阶段：${item.adoption_state ?? "-"}</small>
             <small>Day：${item.onboarding_day ?? "-"}</small>
             <small>状态：${item.expectation_status}</small>
+            <small>首次记录：${item.first_seen_at ?? "-"}</small>
+            <small>激活时间：${item.activated_at ?? "-"}</small>
+            <small>最近事件：${item.last_event_at ?? "-"}</small>
           </div>
         `).join("");
 

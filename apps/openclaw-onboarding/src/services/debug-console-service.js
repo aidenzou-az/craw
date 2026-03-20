@@ -130,7 +130,8 @@ export async function listDebugConsoleItems({ repo, now = Date.now() }) {
       now,
     });
     if (snapshotResult.data) {
-      const { snapshot, expectation } = snapshotResult.data;
+      const { snapshot, expectation, recent_events } = snapshotResult.data;
+      const lastEventAt = recent_events[0]?.timestamp ?? null;
       items.push({
         open_claw_id: snapshot.open_claw_id,
         user_id: snapshot.user_id,
@@ -140,7 +141,9 @@ export async function listDebugConsoleItems({ repo, now = Date.now() }) {
         dominant_scene: snapshot.dominant_scene,
         expectation_status: expectation.status,
         expectation_message: expectation.message,
-        updated_at: snapshot.activated_at ?? snapshot.host_registered_at ?? null,
+        first_seen_at: snapshot.host_registered_at ?? null,
+        activated_at: snapshot.activated_at ?? null,
+        last_event_at: lastEventAt,
       });
     }
   }
