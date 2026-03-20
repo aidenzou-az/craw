@@ -132,6 +132,11 @@ export async function listDebugConsoleItems({ repo, now = Date.now() }) {
     if (snapshotResult.data) {
       const { snapshot, expectation, recent_events } = snapshotResult.data;
       const lastEventAt = recent_events[0]?.timestamp ?? null;
+      const latestActivityAt =
+        lastEventAt ??
+        snapshot.activated_at ??
+        snapshot.host_registered_at ??
+        null;
       items.push({
         open_claw_id: snapshot.open_claw_id,
         user_id: snapshot.user_id,
@@ -144,10 +149,28 @@ export async function listDebugConsoleItems({ repo, now = Date.now() }) {
         first_seen_at: snapshot.host_registered_at ?? null,
         activated_at: snapshot.activated_at ?? null,
         last_event_at: lastEventAt,
+        latest_activity_at: latestActivityAt,
       });
     }
   }
 
-  items.sort((a, b) => (a.open_claw_id < b.open_claw_id ? -1 : 1));
+  const rank = {
+    abnormal: 0,
+    pending: 1,
+    healthy: 2,
+    completed: 3,
+  };
+  items.sort((a, b) => {
+    const rankDiff = (rank[a.expectation_status] ?? 99) - (rank[b.expectation_status] ?? 99);
+    if (rankDiff !== 0) {
+      return rankDiff;
+    }
+    const tsA = a.latest_activity_at ? new Date(a.latest_activity_at).getTime() : 0;
+    const tsB = b.latest_activity_at ? new Date(b.latest_activity_at).getTime() : 0;
+    if (tsA !== tsB) {
+      return tsB - tsA;
+    }
+    return a.open_claw_id.localeCompare(b.open_claw_id);
+  });
   return { data: { items } };
 }

@@ -143,6 +143,11 @@
         color: var(--bad);
         font-weight: 600;
       }
+      .note {
+        margin-top: 12px;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
       .list {
         background: var(--panel);
         border: 1px solid var(--line);
@@ -169,6 +174,9 @@
       .list-item.active {
         border-color: var(--accent);
         box-shadow: inset 0 0 0 1px var(--accent);
+      }
+      .list-item .status-pill {
+        margin-top: 6px;
       }
       .list-item strong {
         display: block;
@@ -208,6 +216,7 @@
           <div id="listItems" class="list-items">
             <div class="muted">正在加载…</div>
           </div>
+          <div class="note">说明：测试期的 <code>adoption_state</code> 按时间驱动，不代表真实采用情况。</div>
         </aside>
 
         <div>
@@ -256,6 +265,25 @@
       const eventsSection = document.getElementById("eventsSection");
       const listItems = document.getElementById("listItems");
 
+      function formatTime(value) {
+        if (!value) {
+          return "-";
+        }
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+          return value;
+        }
+        return new Intl.DateTimeFormat("zh-CN", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }).format(date);
+      }
+
       function renderDl(el, rows) {
         el.innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${v ?? "-"}</dd>`).join("");
       }
@@ -297,7 +325,7 @@
           ["onboarding_day", snapshot.onboarding_day],
           ["adoption_state", snapshot.adoption_state],
           ["dominant_scene", snapshot.dominant_scene],
-          ["expires_at", snapshot.expires_at],
+          ["expires_at", formatTime(snapshot.expires_at)],
         ]);
 
         renderDl(document.getElementById("snapshotAuth"), [
@@ -307,7 +335,7 @@
           ["onboarding_token", snapshot.onboarding_token_preview],
           ["redeemed", String(snapshot.redeemed)],
           ["redeem_id", snapshot.redeem_id],
-          ["activated_at", snapshot.activated_at],
+          ["activated_at", formatTime(snapshot.activated_at)],
         ]);
 
         const eventsBody = document.getElementById("eventsBody");
@@ -338,12 +366,12 @@
         listItems.innerHTML = items.map((item) => `
           <div class="list-item ${item.open_claw_id === selectedOpenClawId ? "active" : ""}" data-id="${item.open_claw_id}">
             <strong>${item.open_claw_id}</strong>
+            <span class="status-pill ${item.expectation_status}">${item.expectation_status}</span>
             <small>阶段：${item.adoption_state ?? "-"}</small>
             <small>Day：${item.onboarding_day ?? "-"}</small>
-            <small>状态：${item.expectation_status}</small>
-            <small>首次记录：${item.first_seen_at ?? "-"}</small>
-            <small>激活时间：${item.activated_at ?? "-"}</small>
-            <small>最近事件：${item.last_event_at ?? "-"}</small>
+            <small>最近活动：${formatTime(item.latest_activity_at)}</small>
+            <small>首次记录：${formatTime(item.first_seen_at)}</small>
+            <small>激活时间：${formatTime(item.activated_at)}</small>
           </div>
         `).join("");
 
@@ -354,6 +382,12 @@
             load();
             loadList(id);
           });
+        }
+
+        if (!selectedOpenClawId && items[0]?.open_claw_id) {
+          input.value = items[0].open_claw_id;
+          await load();
+          await loadList(items[0].open_claw_id);
         }
       }
 
